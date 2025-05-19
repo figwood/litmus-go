@@ -8,13 +8,13 @@ import (
 	"time"
 
 	"github.com/litmuschaos/chaos-operator/api/litmuschaos/v1alpha1"
-	"github.com/litmuschaos/litmus-go/pkg/cerrors"
-	"github.com/litmuschaos/litmus-go/pkg/clients"
-	"github.com/litmuschaos/litmus-go/pkg/log"
-	"github.com/litmuschaos/litmus-go/pkg/math"
-	cmp "github.com/litmuschaos/litmus-go/pkg/probe/comparator"
-	"github.com/litmuschaos/litmus-go/pkg/types"
-	"github.com/litmuschaos/litmus-go/pkg/utils/retry"
+	"github.com/figwood/litmus-go/pkg/cerrors"
+	"github.com/figwood/litmus-go/pkg/clients"
+	"github.com/figwood/litmus-go/pkg/log"
+	"github.com/figwood/litmus-go/pkg/math"
+	cmp "github.com/figwood/litmus-go/pkg/probe/comparator"
+	"github.com/figwood/litmus-go/pkg/types"
+	"github.com/figwood/litmus-go/pkg/utils/retry"
 	"github.com/sirupsen/logrus"
 )
 

@@ -1,7 +1,6 @@
 package lib
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"os/signal"
@@ -9,26 +8,23 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/litmuschaos/litmus-go/pkg/cerrors"
-	"github.com/litmuschaos/litmus-go/pkg/clients"
-	"github.com/litmuschaos/litmus-go/pkg/cloud/vmware"
-	"github.com/litmuschaos/litmus-go/pkg/events"
-	"github.com/litmuschaos/litmus-go/pkg/log"
-	"github.com/litmuschaos/litmus-go/pkg/probe"
-	"github.com/litmuschaos/litmus-go/pkg/telemetry"
-	"github.com/litmuschaos/litmus-go/pkg/types"
-	"github.com/litmuschaos/litmus-go/pkg/utils/common"
-	experimentTypes "github.com/litmuschaos/litmus-go/pkg/vmware/vm-poweroff/types"
+	"github.com/figwood/litmus-go/pkg/cerrors"
+	clients "github.com/figwood/litmus-go/pkg/clients"
+	"github.com/figwood/litmus-go/pkg/cloud/vmware"
+	"github.com/figwood/litmus-go/pkg/events"
+	"github.com/figwood/litmus-go/pkg/log"
+	"github.com/figwood/litmus-go/pkg/probe"
+	"github.com/figwood/litmus-go/pkg/types"
+	"github.com/figwood/litmus-go/pkg/utils/common"
+	experimentTypes "github.com/figwood/litmus-go/pkg/vmware/vm-poweroff/types"
 	"github.com/palantir/stacktrace"
-	"go.opentelemetry.io/otel"
 )
 
 var inject, abort chan os.Signal
 
 // InjectVMPowerOffChaos injects the chaos in serial or parallel mode
-func InjectVMPowerOffChaos(ctx context.Context, experimentsDetails *experimentTypes.ExperimentDetails, clients clients.ClientSets, resultDetails *types.ResultDetails, eventsDetails *types.EventDetails, chaosDetails *types.ChaosDetails, cookie string) error {
-	ctx, span := otel.Tracer(telemetry.TracerName).Start(ctx, "PrepareVMPowerOffFault")
-	defer span.End()
+func InjectVMPowerOffChaos(experimentsDetails *experimentTypes.ExperimentDetails, clients clients.ClientSets, resultDetails *types.ResultDetails, eventsDetails *types.EventDetails, chaosDetails *types.ChaosDetails, cookie string) error {
+
 	// inject channel is used to transmit signal notifications.
 	inject = make(chan os.Signal, 1)
 	// Catch and relay certain signal(s) to inject channel.
@@ -53,11 +49,11 @@ func InjectVMPowerOffChaos(ctx context.Context, experimentsDetails *experimentTy
 
 	switch strings.ToLower(experimentsDetails.Sequence) {
 	case "serial":
-		if err := injectChaosInSerialMode(ctx, experimentsDetails, vmIdList, cookie, clients, resultDetails, eventsDetails, chaosDetails); err != nil {
+		if err := injectChaosInSerialMode(experimentsDetails, vmIdList, cookie, clients, resultDetails, eventsDetails, chaosDetails); err != nil {
 			return stacktrace.Propagate(err, "could not run chaos in serial mode")
 		}
 	case "parallel":
-		if err := injectChaosInParallelMode(ctx, experimentsDetails, vmIdList, cookie, clients, resultDetails, eventsDetails, chaosDetails); err != nil {
+		if err := injectChaosInParallelMode(experimentsDetails, vmIdList, cookie, clients, resultDetails, eventsDetails, chaosDetails); err != nil {
 			return stacktrace.Propagate(err, "could not run chaos in parallel mode")
 		}
 	default:
@@ -74,10 +70,7 @@ func InjectVMPowerOffChaos(ctx context.Context, experimentsDetails *experimentTy
 }
 
 // injectChaosInSerialMode stops VMs in serial mode i.e. one after the other
-func injectChaosInSerialMode(ctx context.Context, experimentsDetails *experimentTypes.ExperimentDetails, vmIdList []string, cookie string, clients clients.ClientSets, resultDetails *types.ResultDetails, eventsDetails *types.EventDetails, chaosDetails *types.ChaosDetails) error {
-	ctx, span := otel.Tracer(telemetry.TracerName).Start(ctx, "injectVMPowerOffFaultInSerialMode")
-	defer span.End()
-
+func injectChaosInSerialMode(experimentsDetails *experimentTypes.ExperimentDetails, vmIdList []string, cookie string, clients clients.ClientSets, resultDetails *types.ResultDetails, eventsDetails *types.EventDetails, chaosDetails *types.ChaosDetails) error {
 	select {
 	case <-inject:
 		// stopping the chaos execution, if abort signal received
@@ -116,7 +109,7 @@ func injectChaosInSerialMode(ctx context.Context, experimentsDetails *experiment
 				//Run the probes during the chaos
 				//The OnChaos probes execution will start in the first iteration and keep running for the entire chaos duration
 				if len(resultDetails.ProbeDetails) != 0 && i == 0 {
-					if err := probe.RunProbes(ctx, chaosDetails, clients, resultDetails, "DuringChaos", eventsDetails); err != nil {
+					if err := probe.RunProbes(chaosDetails, clients, resultDetails, "DuringChaos", eventsDetails); err != nil {
 						return stacktrace.Propagate(err, "failed to run probes")
 					}
 				}
@@ -148,9 +141,7 @@ func injectChaosInSerialMode(ctx context.Context, experimentsDetails *experiment
 }
 
 // injectChaosInParallelMode stops VMs in parallel mode i.e. all at once
-func injectChaosInParallelMode(ctx context.Context, experimentsDetails *experimentTypes.ExperimentDetails, vmIdList []string, cookie string, clients clients.ClientSets, resultDetails *types.ResultDetails, eventsDetails *types.EventDetails, chaosDetails *types.ChaosDetails) error {
-	ctx, span := otel.Tracer(telemetry.TracerName).Start(ctx, "injectVMPowerOffFaultInParallelMode")
-	defer span.End()
+func injectChaosInParallelMode(experimentsDetails *experimentTypes.ExperimentDetails, vmIdList []string, cookie string, clients clients.ClientSets, resultDetails *types.ResultDetails, eventsDetails *types.EventDetails, chaosDetails *types.ChaosDetails) error {
 
 	select {
 	case <-inject:
@@ -193,7 +184,7 @@ func injectChaosInParallelMode(ctx context.Context, experimentsDetails *experime
 
 			//Running the probes during chaos
 			if len(resultDetails.ProbeDetails) != 0 {
-				if err := probe.RunProbes(ctx, chaosDetails, clients, resultDetails, "DuringChaos", eventsDetails); err != nil {
+				if err := probe.RunProbes(chaosDetails, clients, resultDetails, "DuringChaos", eventsDetails); err != nil {
 					return stacktrace.Propagate(err, "failed to run probes")
 				}
 			}

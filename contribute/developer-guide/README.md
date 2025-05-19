@@ -30,7 +30,7 @@ The *generate_experiment.go* script is a simple way to bootstrap your experiment
 - Clone the litmus-go repository & navigate to the `contribute/developer-guide` folder
 
   ```
-  $ git clone https://github.com/litmuschaos/litmus-go.git
+  $ git clone https://github.com/figwood/litmus-go.git
   $ cd litmus-go/contribute/developer-guide
   ```
 
@@ -51,7 +51,7 @@ The *generate_experiment.go* script is a simple way to bootstrap your experiment
   name: "sample-exec-chaos"
   version: "0.1.0"
   category: "sample-category"
-  repository: "https://github.com/litmuschaos/litmus-go/tree/master/sample-category/sample-exec-chaos"
+  repository: "https://github.com/figwood/litmus-go/tree/master/sample-category/sample-exec-chaos"
   community: "https://kubernetes.slack.com/messages/CNXNB0ZTN"
   description: "it execs inside target pods to run the chaos inject commands, waits for the chaos duration and reverts the chaos"
   keywords:
@@ -288,7 +288,7 @@ Follow the steps provided below to setup okteto & test the experiment execution.
 
 ### Steps to Include the Chaos Charts/Experiments into the ChartHub
 
-- Send a PR to the [litmus-go](https://github.com/litmuschaos/litmus-go) repo with the modified experiment files, rbac, 
+- Send a PR to the [litmus-go](https://github.com/figwood/litmus-go) repo with the modified experiment files, rbac, 
   test deployment & README.
 - Send a PR to the [chaos-charts](https://github.com/litmuschaos/chaos-charts) repo with the modified experiment CR, 
   experiment chartserviceversion, rbac, (category-level) chaos chart chartserviceversion & package.yaml (if applicable). 

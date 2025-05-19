@@ -3,7 +3,7 @@ package common
 import (
 	"bytes"
 	"fmt"
-	"github.com/litmuschaos/litmus-go/pkg/cerrors"
+	"github.com/figwood/litmus-go/pkg/cerrors"
 	"github.com/palantir/stacktrace"
 	"math/rand"
 	"os"
@@ -16,12 +16,12 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/litmuschaos/litmus-go/pkg/clients"
-	"github.com/litmuschaos/litmus-go/pkg/events"
-	"github.com/litmuschaos/litmus-go/pkg/log"
-	"github.com/litmuschaos/litmus-go/pkg/math"
-	"github.com/litmuschaos/litmus-go/pkg/result"
-	"github.com/litmuschaos/litmus-go/pkg/types"
+	"github.com/figwood/litmus-go/pkg/clients"
+	"github.com/figwood/litmus-go/pkg/events"
+	"github.com/figwood/litmus-go/pkg/log"
+	"github.com/figwood/litmus-go/pkg/math"
+	"github.com/figwood/litmus-go/pkg/result"
+	"github.com/figwood/litmus-go/pkg/types"
 	apiv1 "k8s.io/api/core/v1"
 )
 
@@ -246,11 +246,11 @@ func RunBashCommand(command string, failMsg string, source string) error {
 }
 
 func RunCLICommands(cmd *exec.Cmd, source, target, failMsg string, errorCode cerrors.ErrorType) error {
-	var stdErr bytes.Buffer
-	cmd.Stdout = os.Stdout
+	var out, stdErr bytes.Buffer
+	cmd.Stdout = &out
 	cmd.Stderr = &stdErr
 	if err = cmd.Run(); err != nil {
-		return cerrors.Error{ErrorCode: errorCode, Target: target, Source: source, Reason: fmt.Sprintf("%s: %s: %s", failMsg, stdErr.String(), err)}
+		return cerrors.Error{ErrorCode: errorCode, Target: target, Source: source, Reason: fmt.Sprintf("%s: %s", failMsg, stdErr.String())}
 	}
 	return nil
 }

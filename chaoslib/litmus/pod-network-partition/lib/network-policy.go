@@ -2,13 +2,13 @@ package lib
 
 import (
 	"fmt"
-	"github.com/litmuschaos/litmus-go/pkg/cerrors"
-	"github.com/litmuschaos/litmus-go/pkg/clients"
+	"github.com/figwood/litmus-go/pkg/cerrors"
+	"github.com/figwood/litmus-go/pkg/clients"
 	"github.com/palantir/stacktrace"
 	"strings"
 
-	network_chaos "github.com/litmuschaos/litmus-go/chaoslib/litmus/network-chaos/lib"
-	experimentTypes "github.com/litmuschaos/litmus-go/pkg/generic/pod-network-partition/types"
+	network_chaos "github.com/figwood/litmus-go/chaoslib/litmus/network-chaos/lib"
+	experimentTypes "github.com/figwood/litmus-go/pkg/generic/pod-network-partition/types"
 	"gopkg.in/yaml.v2"
 	corev1 "k8s.io/api/core/v1"
 	networkv1 "k8s.io/api/networking/v1"

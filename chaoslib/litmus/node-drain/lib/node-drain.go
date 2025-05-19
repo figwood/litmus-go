@@ -3,6 +3,8 @@ package lib
 import (
 	"context"
 	"fmt"
+	"github.com/figwood/litmus-go/pkg/cerrors"
+	"github.com/palantir/stacktrace"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -11,20 +13,15 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/litmuschaos/litmus-go/pkg/cerrors"
-	"github.com/litmuschaos/litmus-go/pkg/telemetry"
-	"github.com/palantir/stacktrace"
-	"go.opentelemetry.io/otel"
-
-	"github.com/litmuschaos/litmus-go/pkg/clients"
-	"github.com/litmuschaos/litmus-go/pkg/events"
-	experimentTypes "github.com/litmuschaos/litmus-go/pkg/generic/node-drain/types"
-	"github.com/litmuschaos/litmus-go/pkg/log"
-	"github.com/litmuschaos/litmus-go/pkg/probe"
-	"github.com/litmuschaos/litmus-go/pkg/status"
-	"github.com/litmuschaos/litmus-go/pkg/types"
-	"github.com/litmuschaos/litmus-go/pkg/utils/common"
-	"github.com/litmuschaos/litmus-go/pkg/utils/retry"
+	clients "github.com/figwood/litmus-go/pkg/clients"
+	"github.com/figwood/litmus-go/pkg/events"
+	experimentTypes "github.com/figwood/litmus-go/pkg/generic/node-drain/types"
+	"github.com/figwood/litmus-go/pkg/log"
+	"github.com/figwood/litmus-go/pkg/probe"
+	"github.com/figwood/litmus-go/pkg/status"
+	"github.com/figwood/litmus-go/pkg/types"
+	"github.com/figwood/litmus-go/pkg/utils/common"
+	"github.com/figwood/litmus-go/pkg/utils/retry"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -35,9 +32,7 @@ var (
 )
 
 // PrepareNodeDrain contains the preparation steps before chaos injection
-func PrepareNodeDrain(ctx context.Context, experimentsDetails *experimentTypes.ExperimentDetails, clients clients.ClientSets, resultDetails *types.ResultDetails, eventsDetails *types.EventDetails, chaosDetails *types.ChaosDetails) error {
-	ctx, span := otel.Tracer(telemetry.TracerName).Start(ctx, "PrepareNodeDrainFault")
-	defer span.End()
+func PrepareNodeDrain(experimentsDetails *experimentTypes.ExperimentDetails, clients clients.ClientSets, resultDetails *types.ResultDetails, eventsDetails *types.EventDetails, chaosDetails *types.ChaosDetails) error {
 
 	// inject channel is used to transmit signal notifications.
 	inject = make(chan os.Signal, 1)
@@ -71,7 +66,7 @@ func PrepareNodeDrain(ctx context.Context, experimentsDetails *experimentTypes.E
 
 	// run the probes during chaos
 	if len(resultDetails.ProbeDetails) != 0 {
-		if err = probe.RunProbes(ctx, chaosDetails, clients, resultDetails, "DuringChaos", eventsDetails); err != nil {
+		if err = probe.RunProbes(chaosDetails, clients, resultDetails, "DuringChaos", eventsDetails); err != nil {
 			return err
 		}
 	}
@@ -80,7 +75,7 @@ func PrepareNodeDrain(ctx context.Context, experimentsDetails *experimentTypes.E
 	go abortWatcher(experimentsDetails, clients, resultDetails, chaosDetails, eventsDetails)
 
 	// Drain the application node
-	if err := drainNode(ctx, experimentsDetails, clients, chaosDetails); err != nil {
+	if err := drainNode(experimentsDetails, clients, chaosDetails); err != nil {
 		log.Info("[Revert]: Reverting chaos because error during draining of node")
 		if uncordonErr := uncordonNode(experimentsDetails, clients, chaosDetails); uncordonErr != nil {
 			return cerrors.PreserveError{ErrString: fmt.Sprintf("[%s,%s]", stacktrace.RootCause(err).Error(), stacktrace.RootCause(uncordonErr).Error())}
@@ -130,9 +125,7 @@ func PrepareNodeDrain(ctx context.Context, experimentsDetails *experimentTypes.E
 }
 
 // drainNode drain the target node
-func drainNode(ctx context.Context, experimentsDetails *experimentTypes.ExperimentDetails, clients clients.ClientSets, chaosDetails *types.ChaosDetails) error {
-	ctx, span := otel.Tracer(telemetry.TracerName).Start(ctx, "InjectNodeDrainFault")
-	defer span.End()
+func drainNode(experimentsDetails *experimentTypes.ExperimentDetails, clients clients.ClientSets, chaosDetails *types.ChaosDetails) error {
 
 	select {
 	case <-inject:

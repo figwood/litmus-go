@@ -1,21 +1,20 @@
 package experiment
 
 import (
-	"context"
 	"os"
 
 	"github.com/litmuschaos/chaos-operator/api/litmuschaos/v1alpha1"
-	litmusLIB "github.com/litmuschaos/litmus-go/chaoslib/litmus/vm-poweroff/lib"
-	"github.com/litmuschaos/litmus-go/pkg/clients"
-	"github.com/litmuschaos/litmus-go/pkg/cloud/vmware"
-	"github.com/litmuschaos/litmus-go/pkg/events"
-	"github.com/litmuschaos/litmus-go/pkg/log"
-	"github.com/litmuschaos/litmus-go/pkg/probe"
-	"github.com/litmuschaos/litmus-go/pkg/result"
-	"github.com/litmuschaos/litmus-go/pkg/types"
-	"github.com/litmuschaos/litmus-go/pkg/utils/common"
-	experimentEnv "github.com/litmuschaos/litmus-go/pkg/vmware/vm-poweroff/environment"
-	experimentTypes "github.com/litmuschaos/litmus-go/pkg/vmware/vm-poweroff/types"
+	litmusLIB "github.com/figwood/litmus-go/chaoslib/litmus/vm-poweroff/lib"
+	clients "github.com/figwood/litmus-go/pkg/clients"
+	"github.com/figwood/litmus-go/pkg/cloud/vmware"
+	"github.com/figwood/litmus-go/pkg/events"
+	"github.com/figwood/litmus-go/pkg/log"
+	"github.com/figwood/litmus-go/pkg/probe"
+	"github.com/figwood/litmus-go/pkg/result"
+	"github.com/figwood/litmus-go/pkg/types"
+	"github.com/figwood/litmus-go/pkg/utils/common"
+	experimentEnv "github.com/figwood/litmus-go/pkg/vmware/vm-poweroff/environment"
+	experimentTypes "github.com/figwood/litmus-go/pkg/vmware/vm-poweroff/types"
 
 	"github.com/sirupsen/logrus"
 )
@@ -23,7 +22,7 @@ import (
 var err error
 
 // VMPoweroff contains steps to inject vm-power-off chaos
-func VMPoweroff(ctx context.Context, clients clients.ClientSets) {
+func VMPoweroff(clients clients.ClientSets) {
 
 	experimentsDetails := experimentTypes.ExperimentDetails{}
 	resultDetails := types.ResultDetails{}
@@ -111,7 +110,7 @@ func VMPoweroff(ctx context.Context, clients clients.ClientSets) {
 		// run the probes in the pre-chaos check
 		if len(resultDetails.ProbeDetails) != 0 {
 
-			if err = probe.RunProbes(ctx, &chaosDetails, clients, &resultDetails, "PreChaos", &eventsDetails); err != nil {
+			if err = probe.RunProbes(&chaosDetails, clients, &resultDetails, "PreChaos", &eventsDetails); err != nil {
 				log.Errorf("Probe Failed: %v", err)
 				msg := "IUT: Running, Probes: Unsuccessful"
 				types.SetEngineEventAttributes(&eventsDetails, types.PreChaosCheck, msg, "Warning", &chaosDetails)
@@ -132,7 +131,7 @@ func VMPoweroff(ctx context.Context, clients clients.ClientSets) {
 
 	chaosDetails.Phase = types.ChaosInjectPhase
 
-	if err = litmusLIB.InjectVMPowerOffChaos(ctx, &experimentsDetails, clients, &resultDetails, &eventsDetails, &chaosDetails, cookie); err != nil {
+	if err = litmusLIB.InjectVMPowerOffChaos(&experimentsDetails, clients, &resultDetails, &eventsDetails, &chaosDetails, cookie); err != nil {
 		log.Errorf("Chaos injection failed: %v", err)
 		result.RecordAfterFailure(&chaosDetails, &resultDetails, err, clients, &eventsDetails)
 		return
@@ -160,7 +159,7 @@ func VMPoweroff(ctx context.Context, clients clients.ClientSets) {
 
 		// run the probes in the post-chaos check
 		if len(resultDetails.ProbeDetails) != 0 {
-			if err = probe.RunProbes(ctx, &chaosDetails, clients, &resultDetails, "PostChaos", &eventsDetails); err != nil {
+			if err = probe.RunProbes(&chaosDetails, clients, &resultDetails, "PostChaos", &eventsDetails); err != nil {
 				log.Errorf("Probes Failed: %v", err)
 				msg := "IUT: Running, Probes: Unsuccessful"
 				types.SetEngineEventAttributes(&eventsDetails, types.PostChaosCheck, msg, "Warning", &chaosDetails)

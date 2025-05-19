@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/litmuschaos/litmus-go/pkg/cerrors"
-	"github.com/litmuschaos/litmus-go/pkg/clients"
-	experimentTypes "github.com/litmuschaos/litmus-go/pkg/kafka/types"
-	"github.com/litmuschaos/litmus-go/pkg/utils/retry"
+	"github.com/figwood/litmus-go/pkg/cerrors"
+	"github.com/figwood/litmus-go/pkg/clients"
+	experimentTypes "github.com/figwood/litmus-go/pkg/kafka/types"
+	"github.com/figwood/litmus-go/pkg/utils/retry"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 

@@ -2,12 +2,9 @@ package helper
 
 import (
 	"bytes"
-	"context"
 	"fmt"
-	"github.com/litmuschaos/litmus-go/pkg/cerrors"
-	"github.com/litmuschaos/litmus-go/pkg/telemetry"
+	"github.com/figwood/litmus-go/pkg/cerrors"
 	"github.com/palantir/stacktrace"
-	"go.opentelemetry.io/otel"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -16,13 +13,13 @@ import (
 	"syscall"
 	"time"
 
-	clients "github.com/litmuschaos/litmus-go/pkg/clients"
-	"github.com/litmuschaos/litmus-go/pkg/events"
-	experimentTypes "github.com/litmuschaos/litmus-go/pkg/generic/pod-dns-chaos/types"
-	"github.com/litmuschaos/litmus-go/pkg/log"
-	"github.com/litmuschaos/litmus-go/pkg/result"
-	"github.com/litmuschaos/litmus-go/pkg/types"
-	"github.com/litmuschaos/litmus-go/pkg/utils/common"
+	clients "github.com/figwood/litmus-go/pkg/clients"
+	"github.com/figwood/litmus-go/pkg/events"
+	experimentTypes "github.com/figwood/litmus-go/pkg/generic/pod-dns-chaos/types"
+	"github.com/figwood/litmus-go/pkg/log"
+	"github.com/figwood/litmus-go/pkg/result"
+	"github.com/figwood/litmus-go/pkg/types"
+	"github.com/figwood/litmus-go/pkg/utils/common"
 	clientTypes "k8s.io/apimachinery/pkg/types"
 )
 
@@ -37,9 +34,7 @@ const (
 )
 
 // Helper injects the dns chaos
-func Helper(ctx context.Context, clients clients.ClientSets) {
-	ctx, span := otel.Tracer(telemetry.TracerName).Start(ctx, "SimulatePodDNSFault")
-	defer span.End()
+func Helper(clients clients.ClientSets) {
 
 	experimentsDetails := experimentTypes.ExperimentDetails{}
 	eventsDetails := types.EventDetails{}

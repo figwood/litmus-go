@@ -11,8 +11,8 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/litmuschaos/litmus-go/contribute/developer-guide/types"
-	"github.com/litmuschaos/litmus-go/pkg/log"
+	"github.com/figwood/litmus-go/contribute/developer-guide/types"
+	"github.com/figwood/litmus-go/pkg/log"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )

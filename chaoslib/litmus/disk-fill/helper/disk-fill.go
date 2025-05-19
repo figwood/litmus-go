@@ -3,10 +3,8 @@ package helper
 import (
 	"context"
 	"fmt"
-	"github.com/litmuschaos/litmus-go/pkg/cerrors"
-	"github.com/litmuschaos/litmus-go/pkg/telemetry"
+	"github.com/figwood/litmus-go/pkg/cerrors"
 	"github.com/palantir/stacktrace"
-	"go.opentelemetry.io/otel"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -15,13 +13,13 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/litmuschaos/litmus-go/pkg/clients"
-	"github.com/litmuschaos/litmus-go/pkg/events"
-	experimentTypes "github.com/litmuschaos/litmus-go/pkg/generic/disk-fill/types"
-	"github.com/litmuschaos/litmus-go/pkg/log"
-	"github.com/litmuschaos/litmus-go/pkg/result"
-	"github.com/litmuschaos/litmus-go/pkg/types"
-	"github.com/litmuschaos/litmus-go/pkg/utils/common"
+	"github.com/figwood/litmus-go/pkg/clients"
+	"github.com/figwood/litmus-go/pkg/events"
+	experimentTypes "github.com/figwood/litmus-go/pkg/generic/disk-fill/types"
+	"github.com/figwood/litmus-go/pkg/log"
+	"github.com/figwood/litmus-go/pkg/result"
+	"github.com/figwood/litmus-go/pkg/types"
+	"github.com/figwood/litmus-go/pkg/utils/common"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/api/resource"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,9 +29,7 @@ import (
 var inject, abort chan os.Signal
 
 // Helper injects the disk-fill chaos
-func Helper(ctx context.Context, clients clients.ClientSets) {
-	ctx, span := otel.Tracer(telemetry.TracerName).Start(ctx, "SimulateDiskFillFault")
-	defer span.End()
+func Helper(clients clients.ClientSets) {
 
 	experimentsDetails := experimentTypes.ExperimentDetails{}
 	eventsDetails := types.EventDetails{}
@@ -189,9 +185,8 @@ func fillDisk(t targetDetails, bs int) error {
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		log.Error(err.Error())
-		return cerrors.Error{ErrorCode: cerrors.ErrorTypeChaosInject, Source: t.Source, Target: fmt.Sprintf("{podName: %s, namespace: %s, container: %s}", t.Name, t.Namespace, t.TargetContainer), Reason: string(out)}
 	}
-	return nil
+	return cerrors.Error{ErrorCode: cerrors.ErrorTypeChaosInject, Source: t.Source, Target: fmt.Sprintf("{podName: %s, namespace: %s, container: %s}", t.Name, t.Namespace, t.TargetContainer), Reason: string(out)}
 }
 
 // getEphemeralStorageAttributes derive the ephemeral storage attributes from the target pod

@@ -9,20 +9,18 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/litmuschaos/litmus-go/pkg/cerrors"
-	"github.com/litmuschaos/litmus-go/pkg/telemetry"
+	"github.com/figwood/litmus-go/pkg/cerrors"
 	"github.com/palantir/stacktrace"
-	"go.opentelemetry.io/otel"
 
-	"github.com/litmuschaos/litmus-go/pkg/clients"
-	experimentTypes "github.com/litmuschaos/litmus-go/pkg/generic/pod-network-partition/types"
-	"github.com/litmuschaos/litmus-go/pkg/log"
-	"github.com/litmuschaos/litmus-go/pkg/probe"
-	"github.com/litmuschaos/litmus-go/pkg/result"
-	"github.com/litmuschaos/litmus-go/pkg/types"
-	"github.com/litmuschaos/litmus-go/pkg/utils/common"
-	"github.com/litmuschaos/litmus-go/pkg/utils/retry"
-	"github.com/litmuschaos/litmus-go/pkg/utils/stringutils"
+	"github.com/figwood/litmus-go/pkg/clients"
+	experimentTypes "github.com/figwood/litmus-go/pkg/generic/pod-network-partition/types"
+	"github.com/figwood/litmus-go/pkg/log"
+	"github.com/figwood/litmus-go/pkg/probe"
+	"github.com/figwood/litmus-go/pkg/result"
+	"github.com/figwood/litmus-go/pkg/types"
+	"github.com/figwood/litmus-go/pkg/utils/common"
+	"github.com/figwood/litmus-go/pkg/utils/retry"
+	"github.com/figwood/litmus-go/pkg/utils/stringutils"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	networkv1 "k8s.io/api/networking/v1"
@@ -34,9 +32,7 @@ var (
 )
 
 // PrepareAndInjectChaos contains the prepration & injection steps
-func PrepareAndInjectChaos(ctx context.Context, experimentsDetails *experimentTypes.ExperimentDetails, clients clients.ClientSets, resultDetails *types.ResultDetails, eventsDetails *types.EventDetails, chaosDetails *types.ChaosDetails) error {
-	ctx, span := otel.Tracer(telemetry.TracerName).Start(ctx, "PreparePodNetworkPartitionFault")
-	defer span.End()
+func PrepareAndInjectChaos(experimentsDetails *experimentTypes.ExperimentDetails, clients clients.ClientSets, resultDetails *types.ResultDetails, eventsDetails *types.EventDetails, chaosDetails *types.ChaosDetails) error {
 
 	// inject channel is used to transmit signal notifications.
 	inject = make(chan os.Signal, 1)
@@ -95,7 +91,7 @@ func PrepareAndInjectChaos(ctx context.Context, experimentsDetails *experimentTy
 
 	// run the probes during chaos
 	if len(resultDetails.ProbeDetails) != 0 {
-		if err := probe.RunProbes(ctx, chaosDetails, clients, resultDetails, "DuringChaos", eventsDetails); err != nil {
+		if err := probe.RunProbes(chaosDetails, clients, resultDetails, "DuringChaos", eventsDetails); err != nil {
 			return err
 		}
 	}
@@ -106,7 +102,7 @@ func PrepareAndInjectChaos(ctx context.Context, experimentsDetails *experimentTy
 		os.Exit(0)
 	default:
 		// creating the network policy to block the traffic
-		if err := createNetworkPolicy(ctx, experimentsDetails, clients, np, runID); err != nil {
+		if err := createNetworkPolicy(experimentsDetails, clients, np, runID); err != nil {
 			return stacktrace.Propagate(err, "could not create network policy")
 		}
 		// updating chaos status to injected for the target pods
@@ -144,9 +140,7 @@ func PrepareAndInjectChaos(ctx context.Context, experimentsDetails *experimentTy
 
 // createNetworkPolicy creates the network policy in the application namespace
 // it blocks ingress/egress traffic for the targeted application for specific/all IPs
-func createNetworkPolicy(ctx context.Context, experimentsDetails *experimentTypes.ExperimentDetails, clients clients.ClientSets, networkPolicy *NetworkPolicy, runID string) error {
-	ctx, span := otel.Tracer(telemetry.TracerName).Start(ctx, "InjectPodNetworkPartitionFault")
-	defer span.End()
+func createNetworkPolicy(experimentsDetails *experimentTypes.ExperimentDetails, clients clients.ClientSets, networkPolicy *NetworkPolicy, runID string) error {
 
 	np := &networkv1.NetworkPolicy{
 		ObjectMeta: v1.ObjectMeta{

@@ -3,9 +3,9 @@ package environment
 import (
 	"strconv"
 
-	exp "github.com/litmuschaos/litmus-go/pkg/generic/pod-delete/types"
-	kafkaTypes "github.com/litmuschaos/litmus-go/pkg/kafka/types"
-	"github.com/litmuschaos/litmus-go/pkg/types"
+	exp "github.com/figwood/litmus-go/pkg/generic/pod-delete/types"
+	kafkaTypes "github.com/figwood/litmus-go/pkg/kafka/types"
+	"github.com/figwood/litmus-go/pkg/types"
 	clientTypes "k8s.io/apimachinery/pkg/types"
 )
 

@@ -3,16 +3,16 @@ package common
 import (
 	"context"
 	"fmt"
-	"github.com/litmuschaos/litmus-go/pkg/cerrors"
+	"github.com/figwood/litmus-go/pkg/cerrors"
 	"github.com/palantir/stacktrace"
 	"math/rand"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/litmuschaos/litmus-go/pkg/clients"
-	"github.com/litmuschaos/litmus-go/pkg/log"
-	"github.com/litmuschaos/litmus-go/pkg/math"
+	"github.com/figwood/litmus-go/pkg/clients"
+	"github.com/figwood/litmus-go/pkg/log"
+	"github.com/figwood/litmus-go/pkg/math"
 	apiv1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )

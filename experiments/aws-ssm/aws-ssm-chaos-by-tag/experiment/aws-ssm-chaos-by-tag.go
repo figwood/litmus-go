@@ -1,27 +1,26 @@
 package experiment
 
 import (
-	"context"
 	"os"
 
 	"github.com/litmuschaos/chaos-operator/api/litmuschaos/v1alpha1"
-	litmusLIB "github.com/litmuschaos/litmus-go/chaoslib/litmus/aws-ssm-chaos/lib/ssm"
-	experimentEnv "github.com/litmuschaos/litmus-go/pkg/aws-ssm/aws-ssm-chaos/environment"
-	experimentTypes "github.com/litmuschaos/litmus-go/pkg/aws-ssm/aws-ssm-chaos/types"
-	"github.com/litmuschaos/litmus-go/pkg/clients"
-	ec2 "github.com/litmuschaos/litmus-go/pkg/cloud/aws/ec2"
-	"github.com/litmuschaos/litmus-go/pkg/cloud/aws/ssm"
-	"github.com/litmuschaos/litmus-go/pkg/events"
-	"github.com/litmuschaos/litmus-go/pkg/log"
-	"github.com/litmuschaos/litmus-go/pkg/probe"
-	"github.com/litmuschaos/litmus-go/pkg/result"
-	"github.com/litmuschaos/litmus-go/pkg/types"
-	"github.com/litmuschaos/litmus-go/pkg/utils/common"
+	litmusLIB "github.com/figwood/litmus-go/chaoslib/litmus/aws-ssm-chaos/lib/ssm"
+	experimentEnv "github.com/figwood/litmus-go/pkg/aws-ssm/aws-ssm-chaos/environment"
+	experimentTypes "github.com/figwood/litmus-go/pkg/aws-ssm/aws-ssm-chaos/types"
+	clients "github.com/figwood/litmus-go/pkg/clients"
+	ec2 "github.com/figwood/litmus-go/pkg/cloud/aws/ec2"
+	"github.com/figwood/litmus-go/pkg/cloud/aws/ssm"
+	"github.com/figwood/litmus-go/pkg/events"
+	"github.com/figwood/litmus-go/pkg/log"
+	"github.com/figwood/litmus-go/pkg/probe"
+	"github.com/figwood/litmus-go/pkg/result"
+	"github.com/figwood/litmus-go/pkg/types"
+	"github.com/figwood/litmus-go/pkg/utils/common"
 	"github.com/sirupsen/logrus"
 )
 
 // AWSSSMChaosByTag inject the ssm chaos on ec2 instance
-func AWSSSMChaosByTag(ctx context.Context, clients clients.ClientSets) {
+func AWSSSMChaosByTag(clients clients.ClientSets) {
 
 	experimentsDetails := experimentTypes.ExperimentDetails{}
 	resultDetails := types.ResultDetails{}
@@ -89,7 +88,7 @@ func AWSSSMChaosByTag(ctx context.Context, clients clients.ClientSets) {
 		// run the probes in the pre-chaos check
 		if len(resultDetails.ProbeDetails) != 0 {
 
-			if err := probe.RunProbes(ctx, &chaosDetails, clients, &resultDetails, "PreChaos", &eventsDetails); err != nil {
+			if err := probe.RunProbes(&chaosDetails, clients, &resultDetails, "PreChaos", &eventsDetails); err != nil {
 				log.Errorf("Probe Failed: %v", err)
 				msg := "AUT: Running, Probes: Unsuccessful"
 				types.SetEngineEventAttributes(&eventsDetails, types.PreChaosCheck, msg, "Warning", &chaosDetails)
@@ -110,7 +109,7 @@ func AWSSSMChaosByTag(ctx context.Context, clients clients.ClientSets) {
 
 	chaosDetails.Phase = types.ChaosInjectPhase
 
-	if err := litmusLIB.PrepareAWSSSMChaosByTag(ctx, &experimentsDetails, clients, &resultDetails, &eventsDetails, &chaosDetails); err != nil {
+	if err := litmusLIB.PrepareAWSSSMChaosByTag(&experimentsDetails, clients, &resultDetails, &eventsDetails, &chaosDetails); err != nil {
 		log.Errorf("Chaos injection failed: %v", err)
 		result.RecordAfterFailure(&chaosDetails, &resultDetails, err, clients, &eventsDetails)
 		//Delete the ssm document on the given aws service monitoring docs
@@ -144,7 +143,7 @@ func AWSSSMChaosByTag(ctx context.Context, clients clients.ClientSets) {
 
 		// run the probes in the post-chaos check
 		if len(resultDetails.ProbeDetails) != 0 {
-			if err := probe.RunProbes(ctx, &chaosDetails, clients, &resultDetails, "PostChaos", &eventsDetails); err != nil {
+			if err := probe.RunProbes(&chaosDetails, clients, &resultDetails, "PostChaos", &eventsDetails); err != nil {
 				log.Errorf("Probes Failed: %v", err)
 				msg := "AUT: Running, Probes: Unsuccessful"
 				types.SetEngineEventAttributes(&eventsDetails, types.PostChaosCheck, msg, "Warning", &chaosDetails)

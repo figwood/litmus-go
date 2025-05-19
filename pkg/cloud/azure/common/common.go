@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/litmuschaos/litmus-go/pkg/cerrors"
+	"github.com/figwood/litmus-go/pkg/cerrors"
 )
 
 // StringInSlice will check and return whether a string is present inside a slice or not

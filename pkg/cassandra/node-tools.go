@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/litmuschaos/litmus-go/pkg/cerrors"
-	litmusexec "github.com/litmuschaos/litmus-go/pkg/utils/exec"
+	"github.com/figwood/litmus-go/pkg/cerrors"
+	litmusexec "github.com/figwood/litmus-go/pkg/utils/exec"
 	"github.com/pkg/errors"
 
-	experimentTypes "github.com/litmuschaos/litmus-go/pkg/cassandra/pod-delete/types"
-	"github.com/litmuschaos/litmus-go/pkg/clients"
-	"github.com/litmuschaos/litmus-go/pkg/log"
+	experimentTypes "github.com/figwood/litmus-go/pkg/cassandra/pod-delete/types"
+	"github.com/figwood/litmus-go/pkg/clients"
+	"github.com/figwood/litmus-go/pkg/log"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 

@@ -1,26 +1,25 @@
 package experiment
 
 import (
-	"context"
 	"os"
 
 	"github.com/litmuschaos/chaos-operator/api/litmuschaos/v1alpha1"
-	litmusLIB "github.com/litmuschaos/litmus-go/chaoslib/litmus/ec2-terminate-by-tag/lib"
-	"github.com/litmuschaos/litmus-go/pkg/clients"
-	aws "github.com/litmuschaos/litmus-go/pkg/cloud/aws/ec2"
-	"github.com/litmuschaos/litmus-go/pkg/events"
-	experimentEnv "github.com/litmuschaos/litmus-go/pkg/kube-aws/ec2-terminate-by-tag/environment"
-	experimentTypes "github.com/litmuschaos/litmus-go/pkg/kube-aws/ec2-terminate-by-tag/types"
-	"github.com/litmuschaos/litmus-go/pkg/log"
-	"github.com/litmuschaos/litmus-go/pkg/probe"
-	"github.com/litmuschaos/litmus-go/pkg/result"
-	"github.com/litmuschaos/litmus-go/pkg/types"
-	"github.com/litmuschaos/litmus-go/pkg/utils/common"
+	litmusLIB "github.com/figwood/litmus-go/chaoslib/litmus/ec2-terminate-by-tag/lib"
+	clients "github.com/figwood/litmus-go/pkg/clients"
+	aws "github.com/figwood/litmus-go/pkg/cloud/aws/ec2"
+	"github.com/figwood/litmus-go/pkg/events"
+	experimentEnv "github.com/figwood/litmus-go/pkg/kube-aws/ec2-terminate-by-tag/environment"
+	experimentTypes "github.com/figwood/litmus-go/pkg/kube-aws/ec2-terminate-by-tag/types"
+	"github.com/figwood/litmus-go/pkg/log"
+	"github.com/figwood/litmus-go/pkg/probe"
+	"github.com/figwood/litmus-go/pkg/result"
+	"github.com/figwood/litmus-go/pkg/types"
+	"github.com/figwood/litmus-go/pkg/utils/common"
 	"github.com/sirupsen/logrus"
 )
 
 // EC2TerminateByTag inject the ebs volume loss chaos
-func EC2TerminateByTag(ctx context.Context, clients clients.ClientSets) {
+func EC2TerminateByTag(clients clients.ClientSets) {
 
 	var (
 		err                  error
@@ -72,7 +71,7 @@ func EC2TerminateByTag(ctx context.Context, clients clients.ClientSets) {
 	log.InfoWithValues("The instance information is as follows", logrus.Fields{
 		"Chaos Duration":               experimentsDetails.ChaosDuration,
 		"Chaos Namespace":              experimentsDetails.ChaosNamespace,
-		"Instance Tag":                 experimentsDetails.Ec2InstanceTag,
+		"Instance Tag":                 experimentsDetails.InstanceTag,
 		"Instance Affected Percentage": experimentsDetails.InstanceAffectedPerc,
 		"Sequence":                     experimentsDetails.Sequence,
 	})
@@ -87,7 +86,7 @@ func EC2TerminateByTag(ctx context.Context, clients clients.ClientSets) {
 		// run the probes in the pre-chaos check
 		if len(resultDetails.ProbeDetails) != 0 {
 
-			if err = probe.RunProbes(ctx, &chaosDetails, clients, &resultDetails, "PreChaos", &eventsDetails); err != nil {
+			if err = probe.RunProbes(&chaosDetails, clients, &resultDetails, "PreChaos", &eventsDetails); err != nil {
 				log.Errorf("Probe Failed: %v", err)
 				msg := "AUT: Running, Probes: Unsuccessful"
 				types.SetEngineEventAttributes(&eventsDetails, types.PreChaosCheck, msg, "Warning", &chaosDetails)
@@ -126,7 +125,7 @@ func EC2TerminateByTag(ctx context.Context, clients clients.ClientSets) {
 
 	chaosDetails.Phase = types.ChaosInjectPhase
 
-	if err = litmusLIB.PrepareEC2TerminateByTag(ctx, &experimentsDetails, clients, &resultDetails, &eventsDetails, &chaosDetails); err != nil {
+	if err = litmusLIB.PrepareEC2TerminateByTag(&experimentsDetails, clients, &resultDetails, &eventsDetails, &chaosDetails); err != nil {
 		log.Errorf("Chaos injection failed: %v", err)
 		result.RecordAfterFailure(&chaosDetails, &resultDetails, err, clients, &eventsDetails)
 		return
@@ -163,7 +162,7 @@ func EC2TerminateByTag(ctx context.Context, clients clients.ClientSets) {
 
 		// run the probes in the post-chaos check
 		if len(resultDetails.ProbeDetails) != 0 {
-			if err = probe.RunProbes(ctx, &chaosDetails, clients, &resultDetails, "PostChaos", &eventsDetails); err != nil {
+			if err = probe.RunProbes(&chaosDetails, clients, &resultDetails, "PostChaos", &eventsDetails); err != nil {
 				log.Errorf("Probes Failed: %v", err)
 				msg := "AUT: Running, Probes: Unsuccessful"
 				types.SetEngineEventAttributes(&eventsDetails, types.PostChaosCheck, msg, "Warning", &chaosDetails)

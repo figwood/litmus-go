@@ -5,29 +5,25 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/litmuschaos/litmus-go/pkg/cerrors"
-	"github.com/litmuschaos/litmus-go/pkg/telemetry"
+	"github.com/figwood/litmus-go/pkg/cerrors"
 	"github.com/palantir/stacktrace"
-	"go.opentelemetry.io/otel"
 
-	"github.com/litmuschaos/litmus-go/pkg/clients"
-	"github.com/litmuschaos/litmus-go/pkg/events"
-	experimentTypes "github.com/litmuschaos/litmus-go/pkg/generic/kubelet-service-kill/types"
-	"github.com/litmuschaos/litmus-go/pkg/log"
-	"github.com/litmuschaos/litmus-go/pkg/probe"
-	"github.com/litmuschaos/litmus-go/pkg/status"
-	"github.com/litmuschaos/litmus-go/pkg/types"
-	"github.com/litmuschaos/litmus-go/pkg/utils/common"
-	"github.com/litmuschaos/litmus-go/pkg/utils/stringutils"
+	clients "github.com/figwood/litmus-go/pkg/clients"
+	"github.com/figwood/litmus-go/pkg/events"
+	experimentTypes "github.com/figwood/litmus-go/pkg/generic/kubelet-service-kill/types"
+	"github.com/figwood/litmus-go/pkg/log"
+	"github.com/figwood/litmus-go/pkg/probe"
+	"github.com/figwood/litmus-go/pkg/status"
+	"github.com/figwood/litmus-go/pkg/types"
+	"github.com/figwood/litmus-go/pkg/utils/common"
+	"github.com/figwood/litmus-go/pkg/utils/stringutils"
 	"github.com/sirupsen/logrus"
 	apiv1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // PrepareKubeletKill contains prepration steps before chaos injection
-func PrepareKubeletKill(ctx context.Context, experimentsDetails *experimentTypes.ExperimentDetails, clients clients.ClientSets, resultDetails *types.ResultDetails, eventsDetails *types.EventDetails, chaosDetails *types.ChaosDetails) error {
-	ctx, span := otel.Tracer(telemetry.TracerName).Start(ctx, "PrepareKubeletServiceKillFault")
-	defer span.End()
+func PrepareKubeletKill(experimentsDetails *experimentTypes.ExperimentDetails, clients clients.ClientSets, resultDetails *types.ResultDetails, eventsDetails *types.EventDetails, chaosDetails *types.ChaosDetails) error {
 
 	var err error
 	if experimentsDetails.TargetNode == "" {
@@ -63,7 +59,7 @@ func PrepareKubeletKill(ctx context.Context, experimentsDetails *experimentTypes
 	}
 
 	// Creating the helper pod to perform node memory hog
-	if err = createHelperPod(ctx, experimentsDetails, clients, chaosDetails, experimentsDetails.TargetNode); err != nil {
+	if err = createHelperPod(experimentsDetails, clients, chaosDetails, experimentsDetails.TargetNode); err != nil {
 		return stacktrace.Propagate(err, "could not create helper pod")
 	}
 
@@ -80,7 +76,7 @@ func PrepareKubeletKill(ctx context.Context, experimentsDetails *experimentTypes
 
 	// run the probes during chaos
 	if len(resultDetails.ProbeDetails) != 0 {
-		if err = probe.RunProbes(ctx, chaosDetails, clients, resultDetails, "DuringChaos", eventsDetails); err != nil {
+		if err = probe.RunProbes(chaosDetails, clients, resultDetails, "DuringChaos", eventsDetails); err != nil {
 			common.DeleteAllHelperPodBasedOnJobCleanupPolicy(appLabel, chaosDetails, clients)
 			return err
 		}
@@ -116,9 +112,7 @@ func PrepareKubeletKill(ctx context.Context, experimentsDetails *experimentTypes
 }
 
 // createHelperPod derive the attributes for helper pod and create the helper pod
-func createHelperPod(ctx context.Context, experimentsDetails *experimentTypes.ExperimentDetails, clients clients.ClientSets, chaosDetails *types.ChaosDetails, appNodeName string) error {
-	ctx, span := otel.Tracer(telemetry.TracerName).Start(ctx, "CreateKubeletServiceKillFaultHelperPod")
-	defer span.End()
+func createHelperPod(experimentsDetails *experimentTypes.ExperimentDetails, clients clients.ClientSets, chaosDetails *types.ChaosDetails, appNodeName string) error {
 
 	privileged := true
 	terminationGracePeriodSeconds := int64(experimentsDetails.TerminationGracePeriodSeconds)

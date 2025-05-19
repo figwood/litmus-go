@@ -3,25 +3,22 @@ package lib
 import (
 	"context"
 	"fmt"
+	"github.com/figwood/litmus-go/pkg/cerrors"
+	"github.com/palantir/stacktrace"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
 	"time"
 
-	"github.com/litmuschaos/litmus-go/pkg/cerrors"
-	"github.com/litmuschaos/litmus-go/pkg/telemetry"
-	"github.com/palantir/stacktrace"
-	"go.opentelemetry.io/otel"
-
-	"github.com/litmuschaos/litmus-go/pkg/clients"
-	experimentTypes "github.com/litmuschaos/litmus-go/pkg/generic/pod-autoscaler/types"
-	"github.com/litmuschaos/litmus-go/pkg/log"
-	"github.com/litmuschaos/litmus-go/pkg/math"
-	"github.com/litmuschaos/litmus-go/pkg/probe"
-	"github.com/litmuschaos/litmus-go/pkg/types"
-	"github.com/litmuschaos/litmus-go/pkg/utils/common"
-	"github.com/litmuschaos/litmus-go/pkg/utils/retry"
+	clients "github.com/figwood/litmus-go/pkg/clients"
+	experimentTypes "github.com/figwood/litmus-go/pkg/generic/pod-autoscaler/types"
+	"github.com/figwood/litmus-go/pkg/log"
+	"github.com/figwood/litmus-go/pkg/math"
+	"github.com/figwood/litmus-go/pkg/probe"
+	"github.com/figwood/litmus-go/pkg/types"
+	"github.com/figwood/litmus-go/pkg/utils/common"
+	"github.com/figwood/litmus-go/pkg/utils/retry"
 	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	appsv1 "k8s.io/client-go/kubernetes/typed/apps/v1"
@@ -35,9 +32,7 @@ var (
 )
 
 // PreparePodAutoscaler contains the preparation steps and chaos injection steps
-func PreparePodAutoscaler(ctx context.Context, experimentsDetails *experimentTypes.ExperimentDetails, clients clients.ClientSets, resultDetails *types.ResultDetails, eventsDetails *types.EventDetails, chaosDetails *types.ChaosDetails) error {
-	ctx, span := otel.Tracer(telemetry.TracerName).Start(ctx, "PreparePodAutoscalerFault")
-	defer span.End()
+func PreparePodAutoscaler(experimentsDetails *experimentTypes.ExperimentDetails, clients clients.ClientSets, resultDetails *types.ResultDetails, eventsDetails *types.EventDetails, chaosDetails *types.ChaosDetails) error {
 
 	//Waiting for the ramp time before chaos injection
 	if experimentsDetails.RampTime != 0 {
@@ -69,7 +64,7 @@ func PreparePodAutoscaler(ctx context.Context, experimentsDetails *experimentTyp
 		//calling go routine which will continuously watch for the abort signal
 		go abortPodAutoScalerChaos(appsUnderTest, experimentsDetails, clients, resultDetails, eventsDetails, chaosDetails)
 
-		if err = podAutoscalerChaosInDeployment(ctx, experimentsDetails, clients, appsUnderTest, resultDetails, eventsDetails, chaosDetails); err != nil {
+		if err = podAutoscalerChaosInDeployment(experimentsDetails, clients, appsUnderTest, resultDetails, eventsDetails, chaosDetails); err != nil {
 			return stacktrace.Propagate(err, "could not scale deployment")
 		}
 
@@ -96,7 +91,7 @@ func PreparePodAutoscaler(ctx context.Context, experimentsDetails *experimentTyp
 		//calling go routine which will continuously watch for the abort signal
 		go abortPodAutoScalerChaos(appsUnderTest, experimentsDetails, clients, resultDetails, eventsDetails, chaosDetails)
 
-		if err = podAutoscalerChaosInStatefulset(ctx, experimentsDetails, clients, appsUnderTest, resultDetails, eventsDetails, chaosDetails); err != nil {
+		if err = podAutoscalerChaosInStatefulset(experimentsDetails, clients, appsUnderTest, resultDetails, eventsDetails, chaosDetails); err != nil {
 			return stacktrace.Propagate(err, "could not scale statefulset")
 		}
 
@@ -160,7 +155,7 @@ func getStatefulsetDetails(experimentsDetails *experimentTypes.ExperimentDetails
 }
 
 // podAutoscalerChaosInDeployment scales up the replicas of deployment and verify the status
-func podAutoscalerChaosInDeployment(ctx context.Context, experimentsDetails *experimentTypes.ExperimentDetails, clients clients.ClientSets, appsUnderTest []experimentTypes.ApplicationUnderTest, resultDetails *types.ResultDetails, eventsDetails *types.EventDetails, chaosDetails *types.ChaosDetails) error {
+func podAutoscalerChaosInDeployment(experimentsDetails *experimentTypes.ExperimentDetails, clients clients.ClientSets, appsUnderTest []experimentTypes.ApplicationUnderTest, resultDetails *types.ResultDetails, eventsDetails *types.EventDetails, chaosDetails *types.ChaosDetails) error {
 
 	// Scale Application
 	retryErr := retries.RetryOnConflict(retries.DefaultRetry, func() error {
@@ -187,11 +182,11 @@ func podAutoscalerChaosInDeployment(ctx context.Context, experimentsDetails *exp
 	}
 	log.Info("[Info]: The application started scaling")
 
-	return deploymentStatusCheck(ctx, experimentsDetails, clients, appsUnderTest, resultDetails, eventsDetails, chaosDetails)
+	return deploymentStatusCheck(experimentsDetails, clients, appsUnderTest, resultDetails, eventsDetails, chaosDetails)
 }
 
 // podAutoscalerChaosInStatefulset scales up the replicas of statefulset and verify the status
-func podAutoscalerChaosInStatefulset(ctx context.Context, experimentsDetails *experimentTypes.ExperimentDetails, clients clients.ClientSets, appsUnderTest []experimentTypes.ApplicationUnderTest, resultDetails *types.ResultDetails, eventsDetails *types.EventDetails, chaosDetails *types.ChaosDetails) error {
+func podAutoscalerChaosInStatefulset(experimentsDetails *experimentTypes.ExperimentDetails, clients clients.ClientSets, appsUnderTest []experimentTypes.ApplicationUnderTest, resultDetails *types.ResultDetails, eventsDetails *types.EventDetails, chaosDetails *types.ChaosDetails) error {
 
 	// Scale Application
 	retryErr := retries.RetryOnConflict(retries.DefaultRetry, func() error {
@@ -217,11 +212,11 @@ func podAutoscalerChaosInStatefulset(ctx context.Context, experimentsDetails *ex
 	}
 	log.Info("[Info]: The application started scaling")
 
-	return statefulsetStatusCheck(ctx, experimentsDetails, clients, appsUnderTest, resultDetails, eventsDetails, chaosDetails)
+	return statefulsetStatusCheck(experimentsDetails, clients, appsUnderTest, resultDetails, eventsDetails, chaosDetails)
 }
 
 // deploymentStatusCheck check the status of deployment and verify the available replicas
-func deploymentStatusCheck(ctx context.Context, experimentsDetails *experimentTypes.ExperimentDetails, clients clients.ClientSets, appsUnderTest []experimentTypes.ApplicationUnderTest, resultDetails *types.ResultDetails, eventsDetails *types.EventDetails, chaosDetails *types.ChaosDetails) error {
+func deploymentStatusCheck(experimentsDetails *experimentTypes.ExperimentDetails, clients clients.ClientSets, appsUnderTest []experimentTypes.ApplicationUnderTest, resultDetails *types.ResultDetails, eventsDetails *types.EventDetails, chaosDetails *types.ChaosDetails) error {
 
 	//ChaosStartTimeStamp contains the start timestamp, when the chaos injection begin
 	ChaosStartTimeStamp := time.Now()
@@ -251,7 +246,7 @@ func deploymentStatusCheck(ctx context.Context, experimentsDetails *experimentTy
 
 	// run the probes during chaos
 	if len(resultDetails.ProbeDetails) != 0 {
-		if err = probe.RunProbes(ctx, chaosDetails, clients, resultDetails, "DuringChaos", eventsDetails); err != nil {
+		if err = probe.RunProbes(chaosDetails, clients, resultDetails, "DuringChaos", eventsDetails); err != nil {
 			return err
 		}
 	}
@@ -266,7 +261,7 @@ func deploymentStatusCheck(ctx context.Context, experimentsDetails *experimentTy
 }
 
 // statefulsetStatusCheck check the status of statefulset and verify the available replicas
-func statefulsetStatusCheck(ctx context.Context, experimentsDetails *experimentTypes.ExperimentDetails, clients clients.ClientSets, appsUnderTest []experimentTypes.ApplicationUnderTest, resultDetails *types.ResultDetails, eventsDetails *types.EventDetails, chaosDetails *types.ChaosDetails) error {
+func statefulsetStatusCheck(experimentsDetails *experimentTypes.ExperimentDetails, clients clients.ClientSets, appsUnderTest []experimentTypes.ApplicationUnderTest, resultDetails *types.ResultDetails, eventsDetails *types.EventDetails, chaosDetails *types.ChaosDetails) error {
 
 	//ChaosStartTimeStamp contains the start timestamp, when the chaos injection begin
 	ChaosStartTimeStamp := time.Now()
@@ -296,7 +291,7 @@ func statefulsetStatusCheck(ctx context.Context, experimentsDetails *experimentT
 
 	// run the probes during chaos
 	if len(resultDetails.ProbeDetails) != 0 {
-		if err = probe.RunProbes(ctx, chaosDetails, clients, resultDetails, "DuringChaos", eventsDetails); err != nil {
+		if err = probe.RunProbes(chaosDetails, clients, resultDetails, "DuringChaos", eventsDetails); err != nil {
 			return err
 		}
 	}

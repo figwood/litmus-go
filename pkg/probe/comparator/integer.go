@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/litmuschaos/litmus-go/pkg/cerrors"
-	"github.com/litmuschaos/litmus-go/pkg/log"
+	"github.com/figwood/litmus-go/pkg/cerrors"
+	"github.com/figwood/litmus-go/pkg/log"
 )
 
 // CompareInt compares integer numbers for specific operation

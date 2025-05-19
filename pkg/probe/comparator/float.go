@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/litmuschaos/litmus-go/pkg/cerrors"
-	"github.com/litmuschaos/litmus-go/pkg/log"
+	"github.com/figwood/litmus-go/pkg/cerrors"
+	"github.com/figwood/litmus-go/pkg/log"
 )
 
 // CompareFloat compares floating numbers for specific operation

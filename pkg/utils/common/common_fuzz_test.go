@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	fuzz "github.com/AdaLogics/go-fuzz-headers"
-	"github.com/litmuschaos/litmus-go/pkg/types"
+	"github.com/figwood/litmus-go/pkg/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

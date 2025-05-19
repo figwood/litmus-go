@@ -6,9 +6,9 @@ import (
 
 	"github.com/aws/aws-sdk-go/service/autoscaling"
 	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/litmuschaos/litmus-go/pkg/cerrors"
-	"github.com/litmuschaos/litmus-go/pkg/cloud/aws/common"
-	"github.com/litmuschaos/litmus-go/pkg/log"
+	"github.com/figwood/litmus-go/pkg/cerrors"
+	"github.com/figwood/litmus-go/pkg/cloud/aws/common"
+	"github.com/figwood/litmus-go/pkg/log"
 	"github.com/palantir/stacktrace"
 )
 

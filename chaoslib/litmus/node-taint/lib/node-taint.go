@@ -3,25 +3,22 @@ package lib
 import (
 	"context"
 	"fmt"
+	"github.com/figwood/litmus-go/pkg/cerrors"
+	"github.com/palantir/stacktrace"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
 	"time"
 
-	"github.com/litmuschaos/litmus-go/pkg/cerrors"
-	"github.com/litmuschaos/litmus-go/pkg/telemetry"
-	"github.com/palantir/stacktrace"
-	"go.opentelemetry.io/otel"
-
-	"github.com/litmuschaos/litmus-go/pkg/clients"
-	"github.com/litmuschaos/litmus-go/pkg/events"
-	experimentTypes "github.com/litmuschaos/litmus-go/pkg/generic/node-taint/types"
-	"github.com/litmuschaos/litmus-go/pkg/log"
-	"github.com/litmuschaos/litmus-go/pkg/probe"
-	"github.com/litmuschaos/litmus-go/pkg/status"
-	"github.com/litmuschaos/litmus-go/pkg/types"
-	"github.com/litmuschaos/litmus-go/pkg/utils/common"
+	clients "github.com/figwood/litmus-go/pkg/clients"
+	"github.com/figwood/litmus-go/pkg/events"
+	experimentTypes "github.com/figwood/litmus-go/pkg/generic/node-taint/types"
+	"github.com/figwood/litmus-go/pkg/log"
+	"github.com/figwood/litmus-go/pkg/probe"
+	"github.com/figwood/litmus-go/pkg/status"
+	"github.com/figwood/litmus-go/pkg/types"
+	"github.com/figwood/litmus-go/pkg/utils/common"
 	apiv1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -32,9 +29,7 @@ var (
 )
 
 // PrepareNodeTaint contains the preparation steps before chaos injection
-func PrepareNodeTaint(ctx context.Context, experimentsDetails *experimentTypes.ExperimentDetails, clients clients.ClientSets, resultDetails *types.ResultDetails, eventsDetails *types.EventDetails, chaosDetails *types.ChaosDetails) error {
-	ctx, span := otel.Tracer(telemetry.TracerName).Start(ctx, "PrepareNodeTaintFault")
-	defer span.End()
+func PrepareNodeTaint(experimentsDetails *experimentTypes.ExperimentDetails, clients clients.ClientSets, resultDetails *types.ResultDetails, eventsDetails *types.EventDetails, chaosDetails *types.ChaosDetails) error {
 
 	// inject channel is used to transmit signal notifications.
 	inject = make(chan os.Signal, 1)
@@ -68,7 +63,7 @@ func PrepareNodeTaint(ctx context.Context, experimentsDetails *experimentTypes.E
 
 	// run the probes during chaos
 	if len(resultDetails.ProbeDetails) != 0 {
-		if err = probe.RunProbes(ctx, chaosDetails, clients, resultDetails, "DuringChaos", eventsDetails); err != nil {
+		if err = probe.RunProbes(chaosDetails, clients, resultDetails, "DuringChaos", eventsDetails); err != nil {
 			return err
 		}
 	}
@@ -77,7 +72,7 @@ func PrepareNodeTaint(ctx context.Context, experimentsDetails *experimentTypes.E
 	go abortWatcher(experimentsDetails, clients, resultDetails, chaosDetails, eventsDetails)
 
 	// taint the application node
-	if err := taintNode(ctx, experimentsDetails, clients, chaosDetails); err != nil {
+	if err := taintNode(experimentsDetails, clients, chaosDetails); err != nil {
 		return stacktrace.Propagate(err, "could not taint node")
 	}
 
@@ -122,9 +117,7 @@ func PrepareNodeTaint(ctx context.Context, experimentsDetails *experimentTypes.E
 }
 
 // taintNode taint the application node
-func taintNode(ctx context.Context, experimentsDetails *experimentTypes.ExperimentDetails, clients clients.ClientSets, chaosDetails *types.ChaosDetails) error {
-	ctx, span := otel.Tracer(telemetry.TracerName).Start(ctx, "InjectNodeTaintFault")
-	defer span.End()
+func taintNode(experimentsDetails *experimentTypes.ExperimentDetails, clients clients.ClientSets, chaosDetails *types.ChaosDetails) error {
 
 	// get the taint labels & effect
 	taintKey, taintValue, taintEffect := getTaintDetails(experimentsDetails)

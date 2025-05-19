@@ -1,13 +1,10 @@
 package helper
 
 import (
-	"context"
 	"fmt"
-	"github.com/litmuschaos/litmus-go/pkg/cerrors"
-	"github.com/litmuschaos/litmus-go/pkg/events"
-	"github.com/litmuschaos/litmus-go/pkg/telemetry"
+	"github.com/figwood/litmus-go/pkg/cerrors"
+	"github.com/figwood/litmus-go/pkg/events"
 	"github.com/palantir/stacktrace"
-	"go.opentelemetry.io/otel"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -16,12 +13,12 @@ import (
 	"syscall"
 	"time"
 
-	clients "github.com/litmuschaos/litmus-go/pkg/clients"
-	experimentTypes "github.com/litmuschaos/litmus-go/pkg/generic/network-chaos/types"
-	"github.com/litmuschaos/litmus-go/pkg/log"
-	"github.com/litmuschaos/litmus-go/pkg/result"
-	"github.com/litmuschaos/litmus-go/pkg/types"
-	"github.com/litmuschaos/litmus-go/pkg/utils/common"
+	clients "github.com/figwood/litmus-go/pkg/clients"
+	experimentTypes "github.com/figwood/litmus-go/pkg/generic/network-chaos/types"
+	"github.com/figwood/litmus-go/pkg/log"
+	"github.com/figwood/litmus-go/pkg/result"
+	"github.com/figwood/litmus-go/pkg/types"
+	"github.com/figwood/litmus-go/pkg/utils/common"
 	clientTypes "k8s.io/apimachinery/pkg/types"
 )
 
@@ -37,9 +34,7 @@ var (
 )
 
 // Helper injects the network chaos
-func Helper(ctx context.Context, clients clients.ClientSets) {
-	ctx, span := otel.Tracer(telemetry.TracerName).Start(ctx, "SimulatePodNetworkFault")
-	defer span.End()
+func Helper(clients clients.ClientSets) {
 
 	experimentsDetails := experimentTypes.ExperimentDetails{}
 	eventsDetails := types.EventDetails{}
@@ -135,7 +130,7 @@ func preparePodNetworkChaos(experimentsDetails *experimentTypes.ExperimentDetail
 		}
 		log.Infof("successfully injected chaos on target: {name: %s, namespace: %v, container: %v}", t.Name, t.Namespace, t.TargetContainer)
 		if err = result.AnnotateChaosResult(resultDetails.Name, chaosDetails.ChaosNamespace, "injected", "pod", t.Name); err != nil {
-			if _, revertErr := killnetem(t, experimentsDetails.NetworkInterface); revertErr != nil {
+			if _, revertErr := killnetem(t, experimentsDetails.NetworkInterface); err != nil {
 				return cerrors.PreserveError{ErrString: fmt.Sprintf("[%s,%s]", stacktrace.RootCause(err).Error(), stacktrace.RootCause(revertErr).Error())}
 			}
 			return stacktrace.Propagate(err, "could not annotate chaosresult")

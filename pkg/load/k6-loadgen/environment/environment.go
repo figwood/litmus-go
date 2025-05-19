@@ -3,8 +3,8 @@ package environment
 import (
 	"strconv"
 
-	experimentTypes "github.com/litmuschaos/litmus-go/pkg/load/k6-loadgen/types"
-	"github.com/litmuschaos/litmus-go/pkg/types"
+	experimentTypes "github.com/figwood/litmus-go/pkg/load/k6-loadgen/types"
+	"github.com/figwood/litmus-go/pkg/types"
 )
 
 // GetENV fetches all the env variables from the runner pod
@@ -25,5 +25,5 @@ func GetENV(experimentDetails *experimentTypes.ExperimentDetails) {
 	experimentDetails.LIBImage = types.Getenv("LIB_IMAGE", "ghcr.io/grafana/k6-operator:latest-runner")
 	experimentDetails.ScriptSecretName = types.Getenv("SCRIPT_SECRET_NAME", "k6-script")
 	experimentDetails.ScriptSecretKey = types.Getenv("SCRIPT_SECRET_KEY", "script.js")
-	experimentDetails.OTELMetricPrefix = types.Getenv("OTEL_METRIC_PREFIX", "k6_")
+
 }

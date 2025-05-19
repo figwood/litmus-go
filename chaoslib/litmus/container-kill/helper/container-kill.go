@@ -1,28 +1,24 @@
 package helper
 
 import (
+	"bytes"
 	"context"
 	"fmt"
-	"os/exec"
-	"strconv"
-	"strings"
-	"time"
-
-	"github.com/litmuschaos/litmus-go/pkg/telemetry"
-	"go.opentelemetry.io/otel"
-
-	"github.com/litmuschaos/litmus-go/pkg/cerrors"
-	"github.com/litmuschaos/litmus-go/pkg/result"
+	"github.com/figwood/litmus-go/pkg/cerrors"
+	"github.com/figwood/litmus-go/pkg/result"
 	"github.com/palantir/stacktrace"
 	"github.com/sirupsen/logrus"
+	"os/exec"
+	"strconv"
+	"time"
 
-	"github.com/litmuschaos/litmus-go/pkg/clients"
-	"github.com/litmuschaos/litmus-go/pkg/events"
-	experimentTypes "github.com/litmuschaos/litmus-go/pkg/generic/container-kill/types"
-	"github.com/litmuschaos/litmus-go/pkg/log"
-	"github.com/litmuschaos/litmus-go/pkg/types"
-	"github.com/litmuschaos/litmus-go/pkg/utils/common"
-	"github.com/litmuschaos/litmus-go/pkg/utils/retry"
+	"github.com/figwood/litmus-go/pkg/clients"
+	"github.com/figwood/litmus-go/pkg/events"
+	experimentTypes "github.com/figwood/litmus-go/pkg/generic/container-kill/types"
+	"github.com/figwood/litmus-go/pkg/log"
+	"github.com/figwood/litmus-go/pkg/types"
+	"github.com/figwood/litmus-go/pkg/utils/common"
+	"github.com/figwood/litmus-go/pkg/utils/retry"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clientTypes "k8s.io/apimachinery/pkg/types"
 )
@@ -30,9 +26,7 @@ import (
 var err error
 
 // Helper injects the container-kill chaos
-func Helper(ctx context.Context, clients clients.ClientSets) {
-	ctx, span := otel.Tracer(telemetry.TracerName).Start(ctx, "SimulateContainerKillFault")
-	defer span.End()
+func Helper(clients clients.ClientSets) {
 
 	experimentsDetails := experimentTypes.ExperimentDetails{}
 	eventsDetails := types.EventDetails{}
@@ -155,16 +149,10 @@ func kill(experimentsDetails *experimentTypes.ExperimentDetails, containerIds []
 	switch experimentsDetails.ContainerRuntime {
 	case "docker":
 		if err := stopDockerContainer(containerIds, experimentsDetails.SocketPath, experimentsDetails.Signal, experimentsDetails.ChaosPodName); err != nil {
-			if isContextDeadlineExceeded(err) {
-				return nil
-			}
 			return stacktrace.Propagate(err, "could not stop container")
 		}
 	case "containerd", "crio":
-		if err := stopContainerdContainer(containerIds, experimentsDetails.SocketPath, experimentsDetails.Signal, experimentsDetails.ChaosPodName, experimentsDetails.Timeout); err != nil {
-			if isContextDeadlineExceeded(err) {
-				return nil
-			}
+		if err := stopContainerdContainer(containerIds, experimentsDetails.SocketPath, experimentsDetails.Signal, experimentsDetails.ChaosPodName); err != nil {
 			return stacktrace.Propagate(err, "could not stop container")
 		}
 	default:
@@ -184,7 +172,7 @@ func validate(t targetDetails, timeout, delay int, clients clients.ClientSets) e
 }
 
 // stopContainerdContainer kill the application container
-func stopContainerdContainer(containerIDs []string, socketPath, signal, source string, timeout int) error {
+func stopContainerdContainer(containerIDs []string, socketPath, signal, source string) error {
 	if signal != "SIGKILL" && signal != "SIGTERM" {
 		return cerrors.Error{ErrorCode: cerrors.ErrorTypeHelper, Source: source, Reason: fmt.Sprintf("unsupported signal %s, use either SIGTERM or SIGKILL", signal)}
 	}
@@ -192,18 +180,29 @@ func stopContainerdContainer(containerIDs []string, socketPath, signal, source s
 	cmd := exec.Command("sudo", "crictl", "-i", fmt.Sprintf("unix://%s", socketPath), "-r", fmt.Sprintf("unix://%s", socketPath), "stop")
 	if signal == "SIGKILL" {
 		cmd.Args = append(cmd.Args, "--timeout=0")
-	} else if timeout != -1 {
-		cmd.Args = append(cmd.Args, fmt.Sprintf("--timeout=%v", timeout))
 	}
 	cmd.Args = append(cmd.Args, containerIDs...)
-	return common.RunCLICommands(cmd, source, "", "failed to stop container", cerrors.ErrorTypeChaosInject)
+
+	var errOut, out bytes.Buffer
+	cmd.Stderr = &errOut
+	cmd.Stdout = &out
+	if err := cmd.Run(); err != nil {
+		return cerrors.Error{ErrorCode: cerrors.ErrorTypeChaosInject, Source: source, Reason: fmt.Sprintf("failed to stop container :%s", out.String())}
+	}
+	return nil
 }
 
 // stopDockerContainer kill the application container
 func stopDockerContainer(containerIDs []string, socketPath, signal, source string) error {
+	var errOut, out bytes.Buffer
 	cmd := exec.Command("sudo", "docker", "--host", fmt.Sprintf("unix://%s", socketPath), "kill", "--signal", signal)
 	cmd.Args = append(cmd.Args, containerIDs...)
-	return common.RunCLICommands(cmd, source, "", "failed to stop container", cerrors.ErrorTypeChaosInject)
+	cmd.Stderr = &errOut
+	cmd.Stdout = &out
+	if err := cmd.Run(); err != nil {
+		return cerrors.Error{ErrorCode: cerrors.ErrorTypeChaosInject, Source: source, Reason: fmt.Sprintf("failed to stop container :%s", out.String())}
+	}
+	return nil
 }
 
 // getRestartCount return the restart count of target container
@@ -263,7 +262,6 @@ func getENV(experimentDetails *experimentTypes.ExperimentDetails) {
 	experimentDetails.Signal = types.Getenv("SIGNAL", "SIGKILL")
 	experimentDetails.Delay, _ = strconv.Atoi(types.Getenv("STATUS_CHECK_DELAY", "2"))
 	experimentDetails.Timeout, _ = strconv.Atoi(types.Getenv("STATUS_CHECK_TIMEOUT", "180"))
-	experimentDetails.ContainerAPITimeout, _ = strconv.Atoi(types.Getenv("CONTAINER_API_TIMEOUT", "-1"))
 }
 
 type targetDetails struct {
@@ -272,8 +270,4 @@ type targetDetails struct {
 	TargetContainer    string
 	RestartCountBefore int
 	Source             string
-}
-
-func isContextDeadlineExceeded(err error) bool {
-	return strings.Contains(err.Error(), "context deadline exceeded")
 }

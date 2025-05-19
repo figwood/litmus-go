@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/litmuschaos/litmus-go/pkg/cerrors"
-	"github.com/litmuschaos/litmus-go/pkg/log"
+	"github.com/figwood/litmus-go/pkg/cerrors"
+	"github.com/figwood/litmus-go/pkg/log"
 	"google.golang.org/api/compute/v1"
 )
 

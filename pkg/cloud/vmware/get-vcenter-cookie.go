@@ -7,7 +7,7 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/litmuschaos/litmus-go/pkg/cerrors"
+	"github.com/figwood/litmus-go/pkg/cerrors"
 )
 
 // ErrorResponse contains error response code

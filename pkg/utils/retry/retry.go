@@ -2,7 +2,7 @@ package retry
 
 import (
 	"fmt"
-	"github.com/litmuschaos/litmus-go/pkg/cerrors"
+	"github.com/figwood/litmus-go/pkg/cerrors"
 	"time"
 
 	"github.com/pkg/errors"

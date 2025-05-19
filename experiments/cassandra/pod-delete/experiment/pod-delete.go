@@ -1,27 +1,26 @@
 package experiment
 
 import (
-	"context"
 	"os"
 
 	"github.com/litmuschaos/chaos-operator/api/litmuschaos/v1alpha1"
-	litmusLIB "github.com/litmuschaos/litmus-go/chaoslib/litmus/pod-delete/lib"
-	"github.com/litmuschaos/litmus-go/pkg/cassandra"
-	experimentEnv "github.com/litmuschaos/litmus-go/pkg/cassandra/pod-delete/environment"
-	experimentTypes "github.com/litmuschaos/litmus-go/pkg/cassandra/pod-delete/types"
-	"github.com/litmuschaos/litmus-go/pkg/clients"
-	"github.com/litmuschaos/litmus-go/pkg/events"
-	"github.com/litmuschaos/litmus-go/pkg/log"
-	"github.com/litmuschaos/litmus-go/pkg/probe"
-	"github.com/litmuschaos/litmus-go/pkg/result"
-	"github.com/litmuschaos/litmus-go/pkg/status"
-	"github.com/litmuschaos/litmus-go/pkg/types"
-	"github.com/litmuschaos/litmus-go/pkg/utils/common"
+	litmusLIB "github.com/figwood/litmus-go/chaoslib/litmus/pod-delete/lib"
+	"github.com/figwood/litmus-go/pkg/cassandra"
+	experimentEnv "github.com/figwood/litmus-go/pkg/cassandra/pod-delete/environment"
+	experimentTypes "github.com/figwood/litmus-go/pkg/cassandra/pod-delete/types"
+	clients "github.com/figwood/litmus-go/pkg/clients"
+	"github.com/figwood/litmus-go/pkg/events"
+	"github.com/figwood/litmus-go/pkg/log"
+	"github.com/figwood/litmus-go/pkg/probe"
+	"github.com/figwood/litmus-go/pkg/result"
+	"github.com/figwood/litmus-go/pkg/status"
+	"github.com/figwood/litmus-go/pkg/types"
+	"github.com/figwood/litmus-go/pkg/utils/common"
 	"github.com/sirupsen/logrus"
 )
 
 // CasssandraPodDelete inject the cassandra-pod-delete chaos
-func CasssandraPodDelete(ctx context.Context, clients clients.ClientSets) {
+func CasssandraPodDelete(clients clients.ClientSets) {
 
 	var err error
 	var ResourceVersionBefore string
@@ -103,7 +102,7 @@ func CasssandraPodDelete(ctx context.Context, clients clients.ClientSets) {
 		// run the probes in the pre-chaos check
 		if len(resultDetails.ProbeDetails) != 0 {
 
-			if err = probe.RunProbes(ctx, &chaosDetails, clients, &resultDetails, "PreChaos", &eventsDetails); err != nil {
+			if err = probe.RunProbes(&chaosDetails, clients, &resultDetails, "PreChaos", &eventsDetails); err != nil {
 				log.Errorf("Probes Failed, err: %v", err)
 				msg = common.GetStatusMessage(chaosDetails.DefaultHealthCheck, "AUT: Running", "Unsuccessful")
 				types.SetEngineEventAttributes(&eventsDetails, types.PreChaosCheck, msg, "Warning", &chaosDetails)
@@ -133,7 +132,7 @@ func CasssandraPodDelete(ctx context.Context, clients clients.ClientSets) {
 
 	chaosDetails.Phase = types.ChaosInjectPhase
 
-	if err = litmusLIB.PreparePodDelete(ctx, experimentsDetails.ChaoslibDetail, clients, &resultDetails, &eventsDetails, &chaosDetails); err != nil {
+	if err = litmusLIB.PreparePodDelete(experimentsDetails.ChaoslibDetail, clients, &resultDetails, &eventsDetails, &chaosDetails); err != nil {
 		log.Errorf("Chaos injection failed, err: %v", err)
 		result.RecordAfterFailure(&chaosDetails, &resultDetails, err, clients, &eventsDetails)
 		return
@@ -170,7 +169,7 @@ func CasssandraPodDelete(ctx context.Context, clients clients.ClientSets) {
 
 		// run the probes in the post-chaos check
 		if len(resultDetails.ProbeDetails) != 0 {
-			if err = probe.RunProbes(ctx, &chaosDetails, clients, &resultDetails, "PostChaos", &eventsDetails); err != nil {
+			if err = probe.RunProbes(&chaosDetails, clients, &resultDetails, "PostChaos", &eventsDetails); err != nil {
 				log.Errorf("Probes Failed, err: %v", err)
 				msg = common.GetStatusMessage(chaosDetails.DefaultHealthCheck, "AUT: Running", "Unsuccessful")
 				types.SetEngineEventAttributes(&eventsDetails, types.PostChaosCheck, msg, "Warning", &chaosDetails)

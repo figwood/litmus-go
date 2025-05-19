@@ -6,8 +6,8 @@ import (
 
 	clientTypes "k8s.io/apimachinery/pkg/types"
 
-	"github.com/litmuschaos/litmus-go/pkg/types"
-	experimentTypes "github.com/litmuschaos/litmus-go/pkg/vmware/vm-poweroff/types"
+	"github.com/figwood/litmus-go/pkg/types"
+	experimentTypes "github.com/figwood/litmus-go/pkg/vmware/vm-poweroff/types"
 )
 
 // GetENV fetches all the env variables from the runner pod

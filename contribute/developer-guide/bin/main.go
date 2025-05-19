@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	sdkCmd "github.com/litmuschaos/litmus-go/contribute/developer-guide"
+	sdkCmd "github.com/figwood/litmus-go/contribute/developer-guide"
 	"github.com/spf13/cobra"
 )
 

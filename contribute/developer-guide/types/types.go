@@ -16,7 +16,7 @@ type Experiment struct {
 	// for example, we have generic, kafka, cassandra, OpenEBS categories
 	Category string `json:"category"`
 	// It should contain the link of the new chaos experiment
-	// this link will be in the form:  https://github.com/litmuschaos/litmus-go/tree/master/<category>/<experiment-name>
+	// this link will be in the form:  https://github.com/figwood/litmus-go/tree/master/<category>/<experiment-name>
 	// this value is needed for csv file(to display in the chaoshub)
 	Repository string `json:"repository"`
 	// It contains the link of the litmus slack

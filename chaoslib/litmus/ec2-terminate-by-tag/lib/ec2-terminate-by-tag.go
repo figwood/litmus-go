@@ -1,7 +1,6 @@
 package lib
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"os/signal"
@@ -9,27 +8,23 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/litmuschaos/litmus-go/pkg/cerrors"
-	"github.com/litmuschaos/litmus-go/pkg/clients"
-	awslib "github.com/litmuschaos/litmus-go/pkg/cloud/aws/ec2"
-	"github.com/litmuschaos/litmus-go/pkg/events"
-	experimentTypes "github.com/litmuschaos/litmus-go/pkg/kube-aws/ec2-terminate-by-tag/types"
-	"github.com/litmuschaos/litmus-go/pkg/log"
-	"github.com/litmuschaos/litmus-go/pkg/probe"
-	"github.com/litmuschaos/litmus-go/pkg/telemetry"
-	"github.com/litmuschaos/litmus-go/pkg/types"
-	"github.com/litmuschaos/litmus-go/pkg/utils/common"
+	"github.com/figwood/litmus-go/pkg/cerrors"
+	clients "github.com/figwood/litmus-go/pkg/clients"
+	awslib "github.com/figwood/litmus-go/pkg/cloud/aws/ec2"
+	"github.com/figwood/litmus-go/pkg/events"
+	experimentTypes "github.com/figwood/litmus-go/pkg/kube-aws/ec2-terminate-by-tag/types"
+	"github.com/figwood/litmus-go/pkg/log"
+	"github.com/figwood/litmus-go/pkg/probe"
+	"github.com/figwood/litmus-go/pkg/types"
+	"github.com/figwood/litmus-go/pkg/utils/common"
 	"github.com/palantir/stacktrace"
 	"github.com/sirupsen/logrus"
-	"go.opentelemetry.io/otel"
 )
 
 var inject, abort chan os.Signal
 
 // PrepareEC2TerminateByTag contains the prepration and injection steps for the experiment
-func PrepareEC2TerminateByTag(ctx context.Context, experimentsDetails *experimentTypes.ExperimentDetails, clients clients.ClientSets, resultDetails *types.ResultDetails, eventsDetails *types.EventDetails, chaosDetails *types.ChaosDetails) error {
-	ctx, span := otel.Tracer(telemetry.TracerName).Start(ctx, "PrepareAWSEC2TerminateFaultByTag")
-	defer span.End()
+func PrepareEC2TerminateByTag(experimentsDetails *experimentTypes.ExperimentDetails, clients clients.ClientSets, resultDetails *types.ResultDetails, eventsDetails *types.EventDetails, chaosDetails *types.ChaosDetails) error {
 
 	// inject channel is used to transmit signal notifications.
 	inject = make(chan os.Signal, 1)
@@ -55,11 +50,11 @@ func PrepareEC2TerminateByTag(ctx context.Context, experimentsDetails *experimen
 
 	switch strings.ToLower(experimentsDetails.Sequence) {
 	case "serial":
-		if err := injectChaosInSerialMode(ctx, experimentsDetails, instanceIDList, clients, resultDetails, eventsDetails, chaosDetails); err != nil {
+		if err := injectChaosInSerialMode(experimentsDetails, instanceIDList, clients, resultDetails, eventsDetails, chaosDetails); err != nil {
 			return stacktrace.Propagate(err, "could not run chaos in serial mode")
 		}
 	case "parallel":
-		if err := injectChaosInParallelMode(ctx, experimentsDetails, instanceIDList, clients, resultDetails, eventsDetails, chaosDetails); err != nil {
+		if err := injectChaosInParallelMode(experimentsDetails, instanceIDList, clients, resultDetails, eventsDetails, chaosDetails); err != nil {
 			return stacktrace.Propagate(err, "could not run chaos in parallel mode")
 		}
 	default:
@@ -75,9 +70,7 @@ func PrepareEC2TerminateByTag(ctx context.Context, experimentsDetails *experimen
 }
 
 // injectChaosInSerialMode will inject the ce2 instance termination in serial mode that is one after other
-func injectChaosInSerialMode(ctx context.Context, experimentsDetails *experimentTypes.ExperimentDetails, instanceIDList []string, clients clients.ClientSets, resultDetails *types.ResultDetails, eventsDetails *types.EventDetails, chaosDetails *types.ChaosDetails) error {
-	ctx, span := otel.Tracer(telemetry.TracerName).Start(ctx, "InjectAWSEC2TerminateFaultByTagInSerialMode")
-	defer span.End()
+func injectChaosInSerialMode(experimentsDetails *experimentTypes.ExperimentDetails, instanceIDList []string, clients clients.ClientSets, resultDetails *types.ResultDetails, eventsDetails *types.EventDetails, chaosDetails *types.ChaosDetails) error {
 
 	select {
 	case <-inject:
@@ -118,7 +111,7 @@ func injectChaosInSerialMode(ctx context.Context, experimentsDetails *experiment
 				// run the probes during chaos
 				// the OnChaos probes execution will start in the first iteration and keep running for the entire chaos duration
 				if len(resultDetails.ProbeDetails) != 0 && i == 0 {
-					if err := probe.RunProbes(ctx, chaosDetails, clients, resultDetails, "DuringChaos", eventsDetails); err != nil {
+					if err := probe.RunProbes(chaosDetails, clients, resultDetails, "DuringChaos", eventsDetails); err != nil {
 						return stacktrace.Propagate(err, "failed to run probes")
 					}
 				}
@@ -149,9 +142,7 @@ func injectChaosInSerialMode(ctx context.Context, experimentsDetails *experiment
 }
 
 // injectChaosInParallelMode will inject the ce2 instance termination in parallel mode that is all at once
-func injectChaosInParallelMode(ctx context.Context, experimentsDetails *experimentTypes.ExperimentDetails, instanceIDList []string, clients clients.ClientSets, resultDetails *types.ResultDetails, eventsDetails *types.EventDetails, chaosDetails *types.ChaosDetails) error {
-	ctx, span := otel.Tracer(telemetry.TracerName).Start(ctx, "InjectAWSEC2TerminateFaultByTagInParallelMode")
-	defer span.End()
+func injectChaosInParallelMode(experimentsDetails *experimentTypes.ExperimentDetails, instanceIDList []string, clients clients.ClientSets, resultDetails *types.ResultDetails, eventsDetails *types.EventDetails, chaosDetails *types.ChaosDetails) error {
 
 	select {
 	case <-inject:
@@ -191,7 +182,7 @@ func injectChaosInParallelMode(ctx context.Context, experimentsDetails *experime
 
 			// run the probes during chaos
 			if len(resultDetails.ProbeDetails) != 0 {
-				if err := probe.RunProbes(ctx, chaosDetails, clients, resultDetails, "DuringChaos", eventsDetails); err != nil {
+				if err := probe.RunProbes(chaosDetails, clients, resultDetails, "DuringChaos", eventsDetails); err != nil {
 					return stacktrace.Propagate(err, "failed to run probes")
 				}
 			}
@@ -230,14 +221,14 @@ func injectChaosInParallelMode(ctx context.Context, experimentsDetails *experime
 // SetTargetInstance will select the target instance which are in running state and filtered from the given instance tag
 func SetTargetInstance(experimentsDetails *experimentTypes.ExperimentDetails) error {
 
-	instanceIDList, err := awslib.GetInstanceList(experimentsDetails.Ec2InstanceTag, experimentsDetails.Region)
+	instanceIDList, err := awslib.GetInstanceList(experimentsDetails.InstanceTag, experimentsDetails.Region)
 	if err != nil {
 		return stacktrace.Propagate(err, "failed to get the instance id list")
 	}
 	if len(instanceIDList) == 0 {
 		return cerrors.Error{
 			ErrorCode: cerrors.ErrorTypeTargetSelection,
-			Reason:    fmt.Sprintf("no instance found with the given tag %v, in region %v", experimentsDetails.Ec2InstanceTag, experimentsDetails.Region),
+			Reason:    fmt.Sprintf("no instance found with the given tag %v, in region %v", experimentsDetails.InstanceTag, experimentsDetails.Region),
 		}
 	}
 
@@ -255,7 +246,7 @@ func SetTargetInstance(experimentsDetails *experimentTypes.ExperimentDetails) er
 		return cerrors.Error{
 			ErrorCode: cerrors.ErrorTypeChaosInject,
 			Reason:    "failed to get any running instance",
-			Target:    fmt.Sprintf("EC2 Instance Tag: %v", experimentsDetails.Ec2InstanceTag)}
+			Target:    fmt.Sprintf("EC2 Instance Tag: %v", experimentsDetails.InstanceTag)}
 	}
 
 	log.InfoWithValues("[Info]: Targeting the running instances filtered from instance tag", logrus.Fields{

@@ -2,7 +2,6 @@ package lib
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -12,20 +11,18 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/litmuschaos/litmus-go/pkg/cerrors"
-	"github.com/litmuschaos/litmus-go/pkg/telemetry"
+	"github.com/figwood/litmus-go/pkg/cerrors"
 	"github.com/palantir/stacktrace"
-	"go.opentelemetry.io/otel"
 	corev1 "k8s.io/api/core/v1"
 
-	"github.com/litmuschaos/litmus-go/pkg/clients"
-	"github.com/litmuschaos/litmus-go/pkg/events"
-	"github.com/litmuschaos/litmus-go/pkg/log"
-	"github.com/litmuschaos/litmus-go/pkg/probe"
-	"github.com/litmuschaos/litmus-go/pkg/result"
-	experimentTypes "github.com/litmuschaos/litmus-go/pkg/spring-boot/spring-boot-chaos/types"
-	"github.com/litmuschaos/litmus-go/pkg/types"
-	"github.com/litmuschaos/litmus-go/pkg/utils/common"
+	"github.com/figwood/litmus-go/pkg/clients"
+	"github.com/figwood/litmus-go/pkg/events"
+	"github.com/figwood/litmus-go/pkg/log"
+	"github.com/figwood/litmus-go/pkg/probe"
+	"github.com/figwood/litmus-go/pkg/result"
+	experimentTypes "github.com/figwood/litmus-go/pkg/spring-boot/spring-boot-chaos/types"
+	"github.com/figwood/litmus-go/pkg/types"
+	"github.com/figwood/litmus-go/pkg/utils/common"
 	"github.com/sirupsen/logrus"
 )
 
@@ -54,10 +51,7 @@ func SetTargetPodList(experimentsDetails *experimentTypes.ExperimentDetails, cli
 }
 
 // PrepareChaos contains the preparation steps before chaos injection
-func PrepareChaos(ctx context.Context, experimentsDetails *experimentTypes.ExperimentDetails, clients clients.ClientSets, resultDetails *types.ResultDetails, eventsDetails *types.EventDetails, chaosDetails *types.ChaosDetails) error {
-	ctx, span := otel.Tracer(telemetry.TracerName).Start(ctx, "PrepareSpringBootFault")
-	defer span.End()
-
+func PrepareChaos(experimentsDetails *experimentTypes.ExperimentDetails, clients clients.ClientSets, resultDetails *types.ResultDetails, eventsDetails *types.EventDetails, chaosDetails *types.ChaosDetails) error {
 	// Waiting for the ramp time before chaos injection
 	if experimentsDetails.RampTime != 0 {
 		log.Infof("[Ramp]: Waiting for the %vs ramp time before injecting chaos", experimentsDetails.RampTime)
@@ -75,11 +69,11 @@ func PrepareChaos(ctx context.Context, experimentsDetails *experimentTypes.Exper
 
 	switch strings.ToLower(experimentsDetails.Sequence) {
 	case "serial":
-		if err := injectChaosInSerialMode(ctx, experimentsDetails, clients, chaosDetails, eventsDetails, resultDetails); err != nil {
+		if err := injectChaosInSerialMode(experimentsDetails, clients, chaosDetails, eventsDetails, resultDetails); err != nil {
 			return stacktrace.Propagate(err, "could not run chaos in serial mode")
 		}
 	case "parallel":
-		if err := injectChaosInParallelMode(ctx, experimentsDetails, clients, chaosDetails, eventsDetails, resultDetails); err != nil {
+		if err := injectChaosInParallelMode(experimentsDetails, clients, chaosDetails, eventsDetails, resultDetails); err != nil {
 			return stacktrace.Propagate(err, "could not run chaos in parallel mode")
 		}
 	default:
@@ -193,7 +187,7 @@ func setChaosMonkeyAssault(chaosMonkeyPort string, chaosMonkeyPath string, assau
 }
 
 // disableChaosMonkey disables chaos monkey on selected pods
-func disableChaosMonkey(ctx context.Context, chaosMonkeyPort string, chaosMonkeyPath string, pod corev1.Pod) error {
+func disableChaosMonkey(chaosMonkeyPort string, chaosMonkeyPath string, pod corev1.Pod) error {
 	log.Infof("[Chaos]: disabling assaults on pod %s", pod.Name)
 	jsonValue, err := json.Marshal(revertAssault)
 	if err != nil {
@@ -217,13 +211,11 @@ func disableChaosMonkey(ctx context.Context, chaosMonkeyPort string, chaosMonkey
 }
 
 // injectChaosInSerialMode injects chaos monkey assault on pods in serial mode(one by one)
-func injectChaosInSerialMode(ctx context.Context, experimentsDetails *experimentTypes.ExperimentDetails, clients clients.ClientSets, chaosDetails *types.ChaosDetails, eventsDetails *types.EventDetails, resultDetails *types.ResultDetails) error {
-	ctx, span := otel.Tracer(telemetry.TracerName).Start(ctx, "InjectSpringBootFaultInSerialMode")
-	defer span.End()
+func injectChaosInSerialMode(experimentsDetails *experimentTypes.ExperimentDetails, clients clients.ClientSets, chaosDetails *types.ChaosDetails, eventsDetails *types.EventDetails, resultDetails *types.ResultDetails) error {
 
 	// run the probes during chaos
 	if len(resultDetails.ProbeDetails) != 0 {
-		if err := probe.RunProbes(ctx, chaosDetails, clients, resultDetails, "DuringChaos", eventsDetails); err != nil {
+		if err := probe.RunProbes(chaosDetails, clients, resultDetails, "DuringChaos", eventsDetails); err != nil {
 			return err
 		}
 	}
@@ -277,7 +269,7 @@ func injectChaosInSerialMode(ctx context.Context, experimentsDetails *experiment
 				select {
 				case <-signChan:
 					log.Info("[Chaos]: Revert Started")
-					if err := disableChaosMonkey(ctx, experimentsDetails.ChaosMonkeyPort, experimentsDetails.ChaosMonkeyPath, pod); err != nil {
+					if err := disableChaosMonkey(experimentsDetails.ChaosMonkeyPort, experimentsDetails.ChaosMonkeyPath, pod); err != nil {
 						log.Errorf("Error in disabling chaos monkey, err: %v", err)
 					} else {
 						common.SetTargets(pod.Name, "reverted", "pod", chaosDetails)
@@ -295,7 +287,7 @@ func injectChaosInSerialMode(ctx context.Context, experimentsDetails *experiment
 				}
 			}
 
-			if err := disableChaosMonkey(ctx, experimentsDetails.ChaosMonkeyPort, experimentsDetails.ChaosMonkeyPath, pod); err != nil {
+			if err := disableChaosMonkey(experimentsDetails.ChaosMonkeyPort, experimentsDetails.ChaosMonkeyPath, pod); err != nil {
 				return err
 			}
 
@@ -307,13 +299,11 @@ func injectChaosInSerialMode(ctx context.Context, experimentsDetails *experiment
 }
 
 // injectChaosInParallelMode injects chaos monkey assault on pods in parallel mode (all at once)
-func injectChaosInParallelMode(ctx context.Context, experimentsDetails *experimentTypes.ExperimentDetails, clients clients.ClientSets, chaosDetails *types.ChaosDetails, eventsDetails *types.EventDetails, resultDetails *types.ResultDetails) error {
-	ctx, span := otel.Tracer(telemetry.TracerName).Start(ctx, "InjectSpringBootFaultInParallelMode")
-	defer span.End()
+func injectChaosInParallelMode(experimentsDetails *experimentTypes.ExperimentDetails, clients clients.ClientSets, chaosDetails *types.ChaosDetails, eventsDetails *types.EventDetails, resultDetails *types.ResultDetails) error {
 
 	// run the probes during chaos
 	if len(resultDetails.ProbeDetails) != 0 {
-		if err := probe.RunProbes(ctx, chaosDetails, clients, resultDetails, "DuringChaos", eventsDetails); err != nil {
+		if err := probe.RunProbes(chaosDetails, clients, resultDetails, "DuringChaos", eventsDetails); err != nil {
 			return err
 		}
 	}
@@ -368,7 +358,7 @@ loop:
 		case <-signChan:
 			log.Info("[Chaos]: Revert Started")
 			for _, pod := range experimentsDetails.TargetPodList.Items {
-				if err := disableChaosMonkey(ctx, experimentsDetails.ChaosMonkeyPort, experimentsDetails.ChaosMonkeyPath, pod); err != nil {
+				if err := disableChaosMonkey(experimentsDetails.ChaosMonkeyPort, experimentsDetails.ChaosMonkeyPath, pod); err != nil {
 					log.Errorf("Error in disabling chaos monkey, err: %v", err)
 				} else {
 					common.SetTargets(pod.Name, "reverted", "pod", chaosDetails)
@@ -389,7 +379,7 @@ loop:
 
 	var errorList []string
 	for _, pod := range experimentsDetails.TargetPodList.Items {
-		if err := disableChaosMonkey(ctx, experimentsDetails.ChaosMonkeyPort, experimentsDetails.ChaosMonkeyPath, pod); err != nil {
+		if err := disableChaosMonkey(experimentsDetails.ChaosMonkeyPort, experimentsDetails.ChaosMonkeyPath, pod); err != nil {
 			errorList = append(errorList, err.Error())
 			continue
 		}

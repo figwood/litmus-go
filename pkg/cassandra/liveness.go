@@ -11,13 +11,13 @@ import (
 
 	"github.com/pkg/errors"
 
-	experimentTypes "github.com/litmuschaos/litmus-go/pkg/cassandra/pod-delete/types"
-	"github.com/litmuschaos/litmus-go/pkg/cerrors"
-	"github.com/litmuschaos/litmus-go/pkg/clients"
-	"github.com/litmuschaos/litmus-go/pkg/log"
-	"github.com/litmuschaos/litmus-go/pkg/status"
-	"github.com/litmuschaos/litmus-go/pkg/utils/retry"
-	"github.com/litmuschaos/litmus-go/pkg/utils/stringutils"
+	experimentTypes "github.com/figwood/litmus-go/pkg/cassandra/pod-delete/types"
+	"github.com/figwood/litmus-go/pkg/cerrors"
+	"github.com/figwood/litmus-go/pkg/clients"
+	"github.com/figwood/litmus-go/pkg/log"
+	"github.com/figwood/litmus-go/pkg/status"
+	"github.com/figwood/litmus-go/pkg/utils/retry"
+	"github.com/figwood/litmus-go/pkg/utils/stringutils"
 	appsv1 "k8s.io/api/apps/v1"
 	apiv1 "k8s.io/api/core/v1"
 

@@ -1,12 +1,12 @@
 # LitmusGo:
 
 [![Slack Channel](https://img.shields.io/badge/Slack-Join-purple)](https://slack.litmuschaos.io)
-![GitHub Workflow](https://github.com/litmuschaos/litmus-go/actions/workflows/push.yml/badge.svg?branch=master)
+![GitHub Workflow](https://github.com/figwood/litmus-go/actions/workflows/push.yml/badge.svg?branch=master)
 [![Docker Pulls](https://img.shields.io/docker/pulls/litmuschaos/go-runner.svg)](https://hub.docker.com/r/litmuschaos/go-runner)
-[![GitHub issues](https://img.shields.io/github/issues/litmuschaos/litmus-go)](https://github.com/litmuschaos/litmus-go/issues)
+[![GitHub issues](https://img.shields.io/github/issues/litmuschaos/litmus-go)](https://github.com/figwood/litmus-go/issues)
 [![Twitter Follow](https://img.shields.io/twitter/follow/litmuschaos?style=social)](https://twitter.com/LitmusChaos)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/5297/badge)](https://bestpractices.coreinfrastructure.org/projects/5297)
-[![Go Report Card](https://goreportcard.com/badge/github.com/litmuschaos/litmus-go)](https://goreportcard.com/report/github.com/litmuschaos/litmus-go)
+[![Go Report Card](https://goreportcard.com/badge/github.com/figwood/litmus-go)](https://goreportcard.com/report/github.com/figwood/litmus-go)
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Flitmuschaos%2Flitmus-go.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Flitmuschaos%2Flitmus-go?ref=badge_shield)
 [![YouTube Channel](https://img.shields.io/badge/YouTube-Subscribe-red)](https://www.youtube.com/channel/UCa57PMqmz_j0wnteRa9nCaw)
 <br><br>
@@ -21,7 +21,7 @@ The Litmus SDK provides a simple way to bootstrap your experiment and helps crea
 
 It generates the custom chaos experiments with some default Pre & Post Chaos Checks (AUT & Auxiliary Applications status checks). It can use the existing chaoslib (present inside /chaoslib directory), if available else It will create a new chaoslib inside the corresponding directory.
 
-Refer [Litmus-SDK](https://github.com/litmuschaos/litmus-go/blob/master/contribute/developer-guide/README.md) for more details.
+Refer [Litmus-SDK](https://github.com/figwood/litmus-go/blob/master/contribute/developer-guide/README.md) for more details.
 
 ## How to get started?
 

@@ -1,23 +1,18 @@
 package latency
 
 import (
-	"context"
 	"strconv"
 
-	http_chaos "github.com/litmuschaos/litmus-go/chaoslib/litmus/http-chaos/lib"
-	"github.com/litmuschaos/litmus-go/pkg/clients"
-	experimentTypes "github.com/litmuschaos/litmus-go/pkg/generic/http-chaos/types"
-	"github.com/litmuschaos/litmus-go/pkg/log"
-	"github.com/litmuschaos/litmus-go/pkg/telemetry"
-	"github.com/litmuschaos/litmus-go/pkg/types"
+	http_chaos "github.com/figwood/litmus-go/chaoslib/litmus/http-chaos/lib"
+	clients "github.com/figwood/litmus-go/pkg/clients"
+	experimentTypes "github.com/figwood/litmus-go/pkg/generic/http-chaos/types"
+	"github.com/figwood/litmus-go/pkg/log"
+	"github.com/figwood/litmus-go/pkg/types"
 	"github.com/sirupsen/logrus"
-	"go.opentelemetry.io/otel"
 )
 
 // PodHttpLatencyChaos contains the steps to prepare and inject http latency chaos
-func PodHttpLatencyChaos(ctx context.Context, experimentsDetails *experimentTypes.ExperimentDetails, clients clients.ClientSets, resultDetails *types.ResultDetails, eventsDetails *types.EventDetails, chaosDetails *types.ChaosDetails) error {
-	ctx, span := otel.Tracer(telemetry.TracerName).Start(ctx, "PreparePodHttpLatencyFault")
-	defer span.End()
+func PodHttpLatencyChaos(experimentsDetails *experimentTypes.ExperimentDetails, clients clients.ClientSets, resultDetails *types.ResultDetails, eventsDetails *types.EventDetails, chaosDetails *types.ChaosDetails) error {
 
 	log.InfoWithValues("[Info]: The chaos tunables are:", logrus.Fields{
 		"Target Port":      experimentsDetails.TargetServicePort,
@@ -29,5 +24,5 @@ func PodHttpLatencyChaos(ctx context.Context, experimentsDetails *experimentType
 	})
 
 	args := "-t latency -a latency=" + strconv.Itoa(experimentsDetails.Latency)
-	return http_chaos.PrepareAndInjectChaos(ctx, experimentsDetails, clients, resultDetails, eventsDetails, chaosDetails, args)
+	return http_chaos.PrepareAndInjectChaos(experimentsDetails, clients, resultDetails, eventsDetails, chaosDetails, args)
 }

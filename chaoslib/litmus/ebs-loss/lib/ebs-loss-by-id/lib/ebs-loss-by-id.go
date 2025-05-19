@@ -1,23 +1,20 @@
 package lib
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
 
-	ebsloss "github.com/litmuschaos/litmus-go/chaoslib/litmus/ebs-loss/lib"
-	"github.com/litmuschaos/litmus-go/pkg/cerrors"
-	"github.com/litmuschaos/litmus-go/pkg/clients"
-	experimentTypes "github.com/litmuschaos/litmus-go/pkg/kube-aws/ebs-loss/types"
-	"github.com/litmuschaos/litmus-go/pkg/log"
-	"github.com/litmuschaos/litmus-go/pkg/telemetry"
-	"github.com/litmuschaos/litmus-go/pkg/types"
-	"github.com/litmuschaos/litmus-go/pkg/utils/common"
+	ebsloss "github.com/figwood/litmus-go/chaoslib/litmus/ebs-loss/lib"
+	"github.com/figwood/litmus-go/pkg/cerrors"
+	clients "github.com/figwood/litmus-go/pkg/clients"
+	experimentTypes "github.com/figwood/litmus-go/pkg/kube-aws/ebs-loss/types"
+	"github.com/figwood/litmus-go/pkg/log"
+	"github.com/figwood/litmus-go/pkg/types"
+	"github.com/figwood/litmus-go/pkg/utils/common"
 	"github.com/palantir/stacktrace"
-	"go.opentelemetry.io/otel"
 )
 
 var (
@@ -26,9 +23,7 @@ var (
 )
 
 // PrepareEBSLossByID contains the prepration and injection steps for the experiment
-func PrepareEBSLossByID(ctx context.Context, experimentsDetails *experimentTypes.ExperimentDetails, clients clients.ClientSets, resultDetails *types.ResultDetails, eventsDetails *types.EventDetails, chaosDetails *types.ChaosDetails) error {
-	ctx, span := otel.Tracer(telemetry.TracerName).Start(ctx, "PrepareAWSEBSLossFaultByID")
-	defer span.End()
+func PrepareEBSLossByID(experimentsDetails *experimentTypes.ExperimentDetails, clients clients.ClientSets, resultDetails *types.ResultDetails, eventsDetails *types.EventDetails, chaosDetails *types.ChaosDetails) error {
 
 	// inject channel is used to transmit signal notifications.
 	inject = make(chan os.Signal, 1)
@@ -62,11 +57,11 @@ func PrepareEBSLossByID(ctx context.Context, experimentsDetails *experimentTypes
 
 		switch strings.ToLower(experimentsDetails.Sequence) {
 		case "serial":
-			if err = ebsloss.InjectChaosInSerialMode(ctx, experimentsDetails, volumeIDList, clients, resultDetails, eventsDetails, chaosDetails); err != nil {
+			if err = ebsloss.InjectChaosInSerialMode(experimentsDetails, volumeIDList, clients, resultDetails, eventsDetails, chaosDetails); err != nil {
 				return stacktrace.Propagate(err, "could not run chaos in serial mode")
 			}
 		case "parallel":
-			if err = ebsloss.InjectChaosInParallelMode(ctx, experimentsDetails, volumeIDList, clients, resultDetails, eventsDetails, chaosDetails); err != nil {
+			if err = ebsloss.InjectChaosInParallelMode(experimentsDetails, volumeIDList, clients, resultDetails, eventsDetails, chaosDetails); err != nil {
 				return stacktrace.Propagate(err, "could not run chaos in parallel mode")
 			}
 		default:

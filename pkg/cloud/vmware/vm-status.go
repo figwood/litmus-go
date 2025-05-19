@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/litmuschaos/litmus-go/pkg/cerrors"
+	"github.com/figwood/litmus-go/pkg/cerrors"
 	"github.com/palantir/stacktrace"
 )
 

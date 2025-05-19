@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/litmuschaos/litmus-go/pkg/cerrors"
-	experimentTypes "github.com/litmuschaos/litmus-go/pkg/gcp/gcp-vm-disk-loss/types"
-	"github.com/litmuschaos/litmus-go/pkg/log"
+	"github.com/figwood/litmus-go/pkg/cerrors"
+	experimentTypes "github.com/figwood/litmus-go/pkg/gcp/gcp-vm-disk-loss/types"
+	"github.com/figwood/litmus-go/pkg/log"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/api/compute/v1"
 )

@@ -6,8 +6,8 @@ import (
 
 	clientTypes "k8s.io/apimachinery/pkg/types"
 
-	experimentTypes "github.com/litmuschaos/litmus-go/pkg/kube-aws/ec2-terminate-by-tag/types"
-	"github.com/litmuschaos/litmus-go/pkg/types"
+	experimentTypes "github.com/figwood/litmus-go/pkg/kube-aws/ec2-terminate-by-tag/types"
+	"github.com/figwood/litmus-go/pkg/types"
 )
 
 // GetENV fetches all the env variables from the runner pod
@@ -25,7 +25,7 @@ func GetENV(experimentDetails *experimentTypes.ExperimentDetails) {
 	experimentDetails.Timeout, _ = strconv.Atoi(types.Getenv("STATUS_CHECK_TIMEOUT", "180"))
 	experimentDetails.Region = types.Getenv("REGION", "")
 	experimentDetails.ManagedNodegroup = types.Getenv("MANAGED_NODEGROUP", "disable")
-	experimentDetails.Ec2InstanceTag = strings.TrimSpace(types.Getenv("EC2_INSTANCE_TAG", ""))
+	experimentDetails.InstanceTag = strings.TrimSpace(types.Getenv("INSTANCE_TAG", ""))
 	experimentDetails.InstanceAffectedPerc, _ = strconv.Atoi(types.Getenv("INSTANCE_AFFECTED_PERC", "0"))
 	experimentDetails.Sequence = types.Getenv("SEQUENCE", "parallel")
 }

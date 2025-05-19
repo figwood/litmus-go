@@ -5,8 +5,8 @@ import (
 
 	clientTypes "k8s.io/apimachinery/pkg/types"
 
-	experimentTypes "github.com/litmuschaos/litmus-go/pkg/baremetal/redfish-node-restart/types"
-	"github.com/litmuschaos/litmus-go/pkg/types"
+	experimentTypes "github.com/figwood/litmus-go/pkg/baremetal/redfish-node-restart/types"
+	"github.com/figwood/litmus-go/pkg/types"
 )
 
 // GetENV fetches all the env variables from the runner pod

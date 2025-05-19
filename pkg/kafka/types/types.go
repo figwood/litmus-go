@@ -1,7 +1,7 @@
 package types
 
 import (
-	exp "github.com/litmuschaos/litmus-go/pkg/generic/pod-delete/types"
+	exp "github.com/figwood/litmus-go/pkg/generic/pod-delete/types"
 )
 
 // ExperimentDetails is for collecting all the experiment-related details
