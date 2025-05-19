@@ -107,6 +107,9 @@ func InitializeChaosResult(chaosDetails *types.ChaosDetails, clients clients.Cli
 
 	// It will create a new chaos-result CR
 	_, err := clients.LitmusClient.ChaosResults(chaosDetails.ChaosNamespace).Create(context.Background(), chaosResult, v1.CreateOptions{})
+	if err != nil {
+		log.Infof("Create ChaosResults Error String: %v", err.Error())
+	}
 
 	// if the chaos result is already present, it will patch the new parameters with the existing chaos result CR
 	// Note: We have added labels inside chaos result and looking for matching labels to list the chaos-result
